@@ -1,17 +1,65 @@
 [中文](https://github.com/siyuan-note/plugin-sample/blob/main/README_zh_CN.md)
 
-# SiYuan plugin sample
+# SiYuan Astro Publisher Plugin
 
-## Get started
+A SiYuan plugin that allows you to publish your notes directly to an Astro blog hosted on GitHub.
 
-* Make a copy of this repo as a template with the <kbd>Use this template</kbd> button, please note that the repo name
-  must be the same as the plugin name, the default branch must be `main`
-* Clone your repo to a local development folder. For convenience, you can place this folder in
-  your `{workspace}/data/plugins/` folder
-* Install [NodeJS](https://nodejs.org/en/download) and [pnpm](https://pnpm.io/installation), then run `pnpm i` in the
-  command line under your repo folder
-* Execute `pnpm run dev` for real-time compilation
-* Open SiYuan marketplace and enable plugin in downloaded tab
+## Features
+
+- 🚀 One-click publishing to Astro blog
+- 📝 Automatic Markdown export with frontmatter
+- 🏷️ Support for tags, categories, and metadata
+- 📅 Automatic date handling
+- 🔄 Update existing posts
+- ⚙️ Easy GitHub configuration
+
+## Setup
+
+### 1. GitHub Configuration
+
+1. Create a GitHub Personal Access Token:
+   - Go to GitHub Settings > Developer settings > Personal access tokens
+   - Generate a new token with `repo` permissions
+   
+2. Configure the plugin:
+   - Open SiYuan settings
+   - Navigate to the Astro Publisher plugin settings
+   - Fill in your GitHub information:
+     - **GitHub Token**: Your personal access token
+     - **GitHub Owner**: Your GitHub username
+     - **GitHub Repository**: Your Astro blog repository name
+     - **Astro Content Path**: Path to your content directory (default: `src/content/posts`)
+
+### 2. Usage
+
+1. Open any document in SiYuan
+2. Click the Astro icon in the top bar or use the keyboard shortcut `Shift+Cmd+P`
+3. Fill in the publication metadata:
+   - Title (auto-filled from document title)
+   - Description
+   - Tags (comma-separated)
+   - Category
+   - Draft status
+4. Click "Publish to Astro Blog"
+
+## Installation
+
+### From Source
+
+1. Clone this repository to your SiYuan plugins directory:
+   ```bash
+   cd {workspace}/data/plugins/
+   git clone <repository-url> plublic_astro
+   ```
+
+2. Install dependencies and build:
+   ```bash
+   cd plublic_astro
+   pnpm install
+   pnpm run build
+   ```
+
+3. Enable the plugin in SiYuan marketplace
 
 ## Development
 

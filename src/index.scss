@@ -20,3 +20,135 @@
     padding: 2px 8px;
   }
 }
+
+// Astro Publisher 相关样式
+.astro-publisher {
+  &__test-btn {
+    &:hover {
+      background-color: var(--b3-theme-primary-lighter);
+      border-color: var(--b3-theme-primary);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+  
+  &__publish-dialog {
+    .b3-dialog__action {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      
+      .fn__space {
+        width: 8px;
+      }
+    }
+    
+    // 自定义字段样式
+    #customFieldsContainer {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--b3-border-color);
+      border-radius: 4px;
+      padding: 8px;
+      background-color: var(--b3-theme-surface);
+      
+      .fn__flex {
+        align-items: center;
+        
+        .b3-text-field {
+          font-size: 12px;
+        }
+        
+        .b3-select {
+          font-size: 12px;
+        }
+        
+        .b3-button--cancel {
+          min-width: 32px;
+          height: 28px;
+          font-size: 16px;
+          line-height: 1;
+        }
+      }
+      
+      &:empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60px;
+        color: var(--b3-theme-on-surface-light);
+        font-size: 12px;
+        
+        &::before {
+          content: "点击下方按钮添加自定义字段";
+        }
+      }
+    }
+    
+    // YAML 预览样式
+    #yamlPreview {
+      font-size: 12px;
+      line-height: 1.4;
+      resize: vertical;
+    }
+  }
+  
+  // 分类管理样式（下拉框模式）
+  &__category-dropdown {
+    .b3-select {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      
+      &:focus {
+        border-color: var(--b3-theme-primary);
+        box-shadow: 0 0 0 2px var(--b3-theme-primary-lighter);
+      }
+    }
+    
+    .category-action-buttons {
+      .b3-button--small {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        
+        &:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        &:disabled {
+          opacity: 0.4;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+  
+  // 分类对话框样式
+  &__category-dialog {
+    .b3-text-field, .b3-select {
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      
+      &:focus {
+        border-color: var(--b3-theme-primary);
+        box-shadow: 0 0 0 2px var(--b3-theme-primary-lighter);
+      }
+    }
+    
+    .field-hint {
+      font-size: 11px;
+      color: var(--b3-theme-on-surface-light);
+      margin-top: 4px;
+      margin-left: 120px;
+      line-height: 1.3;
+    }
+  }
+}

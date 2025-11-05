@@ -1,8 +1,8 @@
 {
-  "name": "plugin-sample",
-  "author": "Vanessa",
-  "url": "https://github.com/siyuan-note/plugin-sample",
-  "version": "0.4.2",
+  "name": "public_astro",
+  "author": "yuzai",
+  "url": "https://github.com/yuzai-code/public_astro.git",
+  "version": "0.0.1",
   "minAppVersion": "3.3.0",
   "backends": [
     "windows",
@@ -24,12 +24,12 @@
   ],
   "disabledInPublish": false,
   "displayName": {
-    "default": "Plugin Sample",
-    "zh_CN": "插件示例"
+    "default": "Publish to Astro Blog",
+    "zh_CN": "发布文章到astro博客"
   },
   "description": {
-    "default": "This is a plugin development sample",
-    "zh_CN": "这是一个插件开发示例"
+    "default": "Publish articles to astro blog",
+    "zh_CN": "发布文章到astro博客"
   },
   "readme": {
     "default": "README.md",
@@ -44,8 +44,8 @@
     ]
   },
   "keywords": [
-    "开发者参考",
-    "developer reference",
-    "示例插件"
+    "astro blog",
+    "publish",
+    "article"
   ]
 }
