@@ -382,6 +382,9 @@ draft: {draft}
                         refreshBtn.disabled = false;
                         
                         showMessage(`已加载 ${this.categories.length} 个分类`, 2000);
+                        
+                        // 调试信息：显示加载的分类
+                        console.log("Loaded categories:", this.categories);
                     } catch (error) {
                         showMessage(this.i18n.categoryOperationFailed.replace("${error}", error.message));
                         refreshBtn.innerHTML = "🔄";
@@ -682,7 +685,10 @@ draft: {draft}
             label: this.i18n.publishToAstro,
             accelerator: "⇧⌘P",
             click: () => {
-                this.showPublishDialog();
+                // 延迟一下确保能获取到正确的活动编辑器
+                setTimeout(() => {
+                    this.showPublishDialog();
+                }, 50);
             }
         });
         menu.addSeparator();
@@ -752,6 +758,11 @@ draft: {draft}
             showMessage(this.i18n.selectDocument);
             return;
         }
+
+        // 调试信息：显示当前文档信息
+        console.log("Current editor:", editor);
+        console.log("Document ID:", editor.protyle?.block?.rootID);
+        console.log("Document title:", this.getDocumentTitle(editor));
 
         if (!this.isConfigValid()) {
             showMessage(this.i18n.configRequired);
@@ -1310,7 +1321,21 @@ draft: {draft}
             }
 
             const fileData = await response.json();
-            const content = atob(fileData.content);
+            // 正确解码 base64 内容，处理 UTF-8 编码
+            let content: string;
+            try {
+                // 尝试使用 TextDecoder 来正确处理 UTF-8
+                const binaryString = atob(fileData.content);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                content = new TextDecoder('utf-8').decode(bytes);
+            } catch (error) {
+                // 如果 TextDecoder 失败，回退到原来的方法
+                console.warn("TextDecoder failed, using fallback method:", error);
+                content = decodeURIComponent(escape(atob(fileData.content)));
+            }
             
             // 解析 frontmatter
             const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
@@ -1319,13 +1344,14 @@ draft: {draft}
             }
 
             const frontmatter = frontmatterMatch[1];
-            const titleMatch = frontmatter.match(/title:\s*['"]?([^'"]*?)['"]?\s*$/m);
-            const descriptionMatch = frontmatter.match(/description:\s*['"]?([^'"]*?)['"]?\s*$/m);
+            // 改进的正则表达式，更好地处理 YAML 格式
+            const titleMatch = frontmatter.match(/title:\s*['"]([^'"]*?)['"]|title:\s*([^'"\n\r]*?)(?:\n|\r|$)/m);
+            const descriptionMatch = frontmatter.match(/description:\s*['"]([^'"]*?)['"]|description:\s*([^'"\n\r]*?)(?:\n|\r|$)/m);
 
             return {
                 name: categoryName,
-                title: titleMatch ? titleMatch[1] : categoryName,
-                description: descriptionMatch ? descriptionMatch[1] : ''
+                title: titleMatch ? (titleMatch[1] || titleMatch[2] || categoryName).trim() : categoryName,
+                description: descriptionMatch ? (descriptionMatch[1] || descriptionMatch[2] || '').trim() : ''
             };
         } catch (error) {
             console.error(`Failed to get category data for ${categoryName}:`, error);
@@ -1534,9 +1560,53 @@ description: '${category.description}'
     private getEditor() {
         const editors = getAllEditor();
         if (editors.length === 0) {
-            showMessage("please open doc first");
+            showMessage("请先打开一个文档");
             return;
         }
+        
+        // 方法1: 检查当前焦点所在的编辑器
+        const activeElement = document.activeElement;
+        if (activeElement) {
+            for (const editor of editors) {
+                if (editor.protyle?.element?.contains(activeElement)) {
+                    console.log("Found editor by active element:", editor.protyle?.block?.rootID);
+                    return editor;
+                }
+            }
+        }
+        
+        // 方法2: 检查哪个编辑器在当前可见的标签页中
+        const currentTab = document.querySelector('.layout-tab-container .item--focus');
+        if (currentTab) {
+            const tabId = currentTab.getAttribute('data-id');
+            for (const editor of editors) {
+                const editorTab = editor.protyle?.element?.closest('.fn__flex-1[data-id]');
+                if (editorTab && editorTab.getAttribute('data-id') === tabId) {
+                    console.log("Found editor by tab:", editor.protyle?.block?.rootID);
+                    return editor;
+                }
+            }
+        }
+        
+        // 方法3: 检查哪个编辑器是可见的且在前台
+        for (const editor of editors) {
+            const element = editor.protyle?.element;
+            if (element && element.offsetParent !== null) {
+                const rect = element.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    // 检查是否在视口中
+                    if (rect.top >= 0 && rect.left >= 0 && 
+                        rect.bottom <= window.innerHeight && 
+                        rect.right <= window.innerWidth) {
+                        console.log("Found editor by visibility:", editor.protyle?.block?.rootID);
+                        return editor;
+                    }
+                }
+            }
+        }
+        
+        // 方法4: 如果还是没找到，返回第一个编辑器
+        console.log("Using first editor as fallback:", editors[0].protyle?.block?.rootID);
         return editors[0];
     }
 }
