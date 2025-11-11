@@ -3,6 +3,60 @@ import type { CustomField, PublishMetadata } from "../types";
 import { generateFrontmatter, normalizeMetadata } from "../utils/metadata";
 import type PluginSample from "../index";
 
+function extractTagsFromContent(content: string): string[] {
+    const tags = new Set<string>();
+
+    const lines = content.split(/\r?\n/);
+    for (const line of lines) {
+        const trimmedLine = line.trim();
+
+        if (trimmedLine.startsWith("#") && !trimmedLine.startsWith("##") && !trimmedLine.startsWith("###")) {
+            const match = trimmedLine.match(/^#\s*(.+)$/);
+            if (match && match[1]) {
+                const afterHash = match[1].trim();
+                if (afterHash && !afterHash.startsWith("#") && !afterHash.startsWith("[")) {
+                    const tagPart = afterHash.split(/\s+/)[0];
+                    const cleanTag = tagPart.replace(/[\[\]#]/g, "").trim();
+                    if (cleanTag && !cleanTag.match(/^\d+\./)) {
+                        tags.add(cleanTag);
+                    }
+                }
+            }
+        }
+
+        if (trimmedLine.startsWith("tags:") || trimmedLine.startsWith("- 标签") || trimmedLine.startsWith("标签:")) {
+            const afterColon = trimmedLine.split(":")[1];
+            if (afterColon) {
+                const tagStrings = afterColon.split(/[,\|、]/);
+                tagStrings.forEach(tag => {
+                    const cleanTag = tag.trim().replace(/^#/, "").replace(/[\[\]]/g, "");
+                    if (cleanTag && cleanTag.length > 0) {
+                        tags.add(cleanTag);
+                    }
+                });
+            }
+        }
+
+        if (trimmedLine.includes("[") && trimmedLine.includes("]")) {
+            const match = trimmedLine.match(/\[([^\]]+)\]/g);
+            if (match) {
+                match.forEach(bracket => {
+                    const inside = bracket.replace(/[\[\]]/g, "");
+                    const tagParts = inside.split(/[,\|、]/);
+                    tagParts.forEach(part => {
+                        const cleanTag = part.trim().replace(/^#/, "");
+                        if (cleanTag && !cleanTag.match(/^\d+\./)) {
+                            tags.add(cleanTag);
+                        }
+                    });
+                });
+            }
+        }
+    }
+
+    return Array.from(tags).filter(tag => tag.length > 0);
+}
+
 export async function openPublishDialog(plugin: PluginSample): Promise<void> {
     const editor = plugin.getEditor();
     if (!editor) {
@@ -13,6 +67,16 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
     if (!plugin.isConfigValid()) {
         showMessage(plugin.i18n.configRequired);
         return;
+    }
+
+    const docId = editor.protyle.block.rootID;
+    let extractedTags: string[] = [];
+    try {
+        const content = await plugin.getDocumentContent(docId);
+        extractedTags = extractTagsFromContent(content);
+        console.log("Extracted tags from document:", extractedTags);
+    } catch (error) {
+        console.warn("Failed to extract tags from document:", error);
     }
 
     const dialog = new Dialog({
@@ -42,7 +106,7 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
             </label>
             <div class="fn__hr"></div>
             <label class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size200">${plugin.i18n.category}</div>
+                <div class="fn__flex-center fn__size200">${plugin.i18n.category} <span style="color: var(--b3-theme-error);">*</span></div>
                 <div class="fn__flex-1">
                     <select class="b3-select fn__flex-1" id="category">
                         <option value="">${plugin.i18n.selectCategory}</option>
@@ -105,6 +169,10 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
         customFieldsSection.parentElement.insertBefore(configuredFieldsContainer, customFieldsSection);
     }
 
+    if (extractedTags.length > 0) {
+        tagsInput.value = extractedTags.join(", ");
+    }
+
     const addConfiguredField = (field: CustomField, lockedFromTemplate = false) => {
         if (!field?.name) {
             return;
@@ -146,6 +214,8 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
             textInput.className = "b3-text-field fn__flex-1";
             inputElement = textInput;
         }
+
+        inputElement.dataset.fieldName = field.name;
 
         if (inputElement instanceof HTMLInputElement && inputElement.type !== "checkbox") {
             inputElement.placeholder = field.placeholder || "";
@@ -464,6 +534,28 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
                 draft: draftInput.checked,
                 customFields
             };
+
+            const validationErrors: string[] = [];
+
+            if (!metadata.category || metadata.category.trim() === "") {
+                validationErrors.push("分类不能为空");
+            }
+
+            if (Array.isArray(plugin.astroConfig.customFields)) {
+                for (const field of plugin.astroConfig.customFields) {
+                    if (field.required) {
+                        const value = customFields[field.name];
+                        if (value === undefined || value === null || value === "" || (Array.isArray(value) && value.length === 0)) {
+                            const fieldLabel = field.label || field.name;
+                            validationErrors.push(`"${fieldLabel}" 不能为空`);
+                        }
+                    }
+                }
+            }
+
+            if (validationErrors.length > 0) {
+                throw new Error(validationErrors.join("\n"));
+            }
 
             const normalized = normalizeMetadata(metadata);
             const filePath = await plugin.publishToGitHub(editor.protyle.block.rootID, normalized);

@@ -23,41 +23,6 @@ export function openPluginMenu(plugin: PluginSample, rect?: DOMRect): void {
             plugin.showPublishStats();
         }
     });
-    menu.addSeparator();
-    menu.addItem({
-        icon: "iconInfo",
-        label: "Dialog(open doc first)",
-        accelerator: plugin.commands[0]?.customHotkey,
-        click: () => {
-            plugin.showDialog();
-        }
-    });
-    if (!plugin.isMobile) {
-        menu.addItem({
-            icon: "iconFace",
-            label: "Open Custom Tab",
-            click: () => {
-                const tab = openTab({
-                    app: plugin.app,
-                    custom: {
-                        icon: "iconFace",
-                        title: "Custom Tab",
-                        data: {
-                            text: platformUtils.isHuawei() ? "Hello, Huawei!" : "This is my custom tab"
-                        },
-                        id: plugin.name + TAB_TYPE
-                    }
-                });
-                console.log(tab);
-            }
-        });
-    }
-        menu.addSeparator();
-        menu.addItem({
-            icon: "iconSparkles",
-            label: plugin.data[STORAGE_NAME]?.readonlyText || "Readonly",
-            type: "readonly"
-        });
     if (plugin.isMobile) {
         menu.fullscreen();
     } else if (rect) {
