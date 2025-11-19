@@ -14,6 +14,7 @@ A SiYuan plugin that allows you to publish your notes directly to an Astro blog 
 - ⚙️ Easy GitHub configuration
 - 📸 Publish "moments" JSON entries to custom directories
 - 🖼️ Publish curated album JSON pages with optional COS/S3 image uploads
+- 📊 Review previously published posts, moments, and albums in one dashboard, see their storage paths, and reopen entries for quick edits
 
 ## Setup
 
@@ -220,3 +221,9 @@ Developers should pay attention to the following when developing the functionali
 
 * If `/api/filetree/createDailyNote` is called to create a daily note, the attribute will be automatically added to the document, and developers do not need to handle it separately
 * If a document is created manually by developer's code (e.g., using the `createDocWithMd` API to create a daily note), please manually add this attribute to the document
+## Moments & Albums storage and editing
+
+- **Storage location** – moments are saved under `src/content/moments` (or your configured path) and albums under `src/content/albums`. Each publish writes a JSON file per entry in your GitHub repo.
+- **Publish dashboard** – open **📈 Publish Statistics** to inspect all posts, moments, and albums. The new Moments/Albums tabs display the resolved repository path, latest publish time, and metadata preview.
+- **Edit existing entries** – click **Edit** on a moment or album card in the dashboard to reopen the dialog with the stored JSON, adjust the fields, and publish again without reopening the original document.
+- **Add new items** – the dashboard also exposes "New Moment" and "New Album" shortcuts so you can keep publishing while immediately verifying where each JSON lives.

@@ -89,3 +89,24 @@ export interface AlbumMetadata {
     tags: string[];
     photos: AlbumPhoto[];
 }
+
+export interface MomentRecord {
+    slug: string;
+    filePath: string;
+    createdAt: string;
+    lastPublishedAt: string;
+    imageCount: number;
+    tags: string[];
+    metadata: MomentMetadata;
+}
+
+export interface AlbumRecord {
+    slug: string;
+    filePath: string;
+    createdAt: string;
+    lastPublishedAt: string;
+    photoCount: number;
+    tags: string[];
+    cover?: string;
+    metadata: AlbumMetadata;
+}

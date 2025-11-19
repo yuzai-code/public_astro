@@ -15,8 +15,8 @@ import {
 import "./index.scss";
 import {IMenuItem} from "siyuan/types";
 
-import {STORAGE_NAME, ASTRO_CONFIG_NAME, ASTRO_STATS_NAME, TAB_TYPE} from "./constants";
-import type {AstroConfig, Category, MomentMetadata, PublishMetadata, PublishStat, AlbumMetadata} from "./types";
+import {STORAGE_NAME, ASTRO_CONFIG_NAME, ASTRO_STATS_NAME, TAB_TYPE, ASTRO_MOMENT_RECORDS_NAME, ASTRO_ALBUM_RECORDS_NAME} from "./constants";
+import type {AstroConfig, Category, MomentMetadata, PublishMetadata, PublishStat, AlbumMetadata, MomentRecord, AlbumRecord} from "./types";
 import {
     generateFrontmatter,
     getPostFilePath,
@@ -51,6 +51,8 @@ export default class PluginSample extends Plugin {
     public astroConfig!: AstroConfig;
     public categories: Category[] = [];
     public publishStats: Record<string, PublishStat> = {};
+    public momentRecords: Record<string, MomentRecord> = {};
+    public albumRecords: Record<string, AlbumRecord> = {};
     private setting!: any;
     public protyleSlash: any;
     public protyleOptions: any;
@@ -180,12 +182,12 @@ export default class PluginSample extends Plugin {
         openPublishDialog(this);
     }
 
-    showMomentDialog() {
-        openMomentDialog(this);
+    showMomentDialog(record?: MomentRecord, onPublished?: () => void) {
+        openMomentDialog(this, record, onPublished);
     }
 
-    showAlbumDialog() {
-        openAlbumDialog(this);
+    showAlbumDialog(record?: AlbumRecord, onPublished?: () => void) {
+        openAlbumDialog(this, record, onPublished);
     }
 
     showPublishStats() {
@@ -288,7 +290,7 @@ export default class PluginSample extends Plugin {
         return filePath;
     }
 
-    async publishMoment(metadata: MomentMetadata): Promise<string> {
+    async publishMoment(metadata: MomentMetadata, previousSlug?: string): Promise<string> {
         if (!this.isMomentConfigValid()) {
             throw new Error(this.i18n.momentConfigRequired || this.i18n.configRequired);
         }
@@ -319,10 +321,11 @@ export default class PluginSample extends Plugin {
         const message = `${existingFile ? "Update" : "Add"} moment: ${resolvedSlug}`;
         const jsonContent = `${JSON.stringify(payload, null, 4)}\n`;
         await uploadToGitHub(this.astroConfig, filePath, jsonContent, message, existingFile?.sha);
+        this.recordMomentPublish(normalized, filePath, previousSlug);
         return filePath;
     }
 
-    async publishAlbum(metadata: AlbumMetadata): Promise<string> {
+    async publishAlbum(metadata: AlbumMetadata, previousSlug?: string): Promise<string> {
         if (!this.isAlbumConfigValid()) {
             throw new Error(this.i18n.albumConfigRequired || this.i18n.configRequired);
         }
@@ -365,7 +368,15 @@ export default class PluginSample extends Plugin {
         const existingFile = await getFileFromGitHub(this.astroConfig, filePath);
         const message = `${existingFile ? "Update" : "Add"} album: ${resolvedSlug}`;
         const jsonContent = `${JSON.stringify(payload, null, 4)}\n`;
+        const normalizedTags = Array.isArray(payload.tags) ? payload.tags as string[] : normalized.tags;
+        const normalizedMetadata: AlbumMetadata = {
+            ...normalized,
+            tags: normalizedTags || [],
+            photos: normalizedPhotos
+        };
+
         await uploadToGitHub(this.astroConfig, filePath, jsonContent, message, existingFile?.sha);
+        this.recordAlbumPublish(normalizedMetadata, filePath, previousSlug);
         return filePath;
     }
 
@@ -522,6 +533,61 @@ export default class PluginSample extends Plugin {
 
         this.publishStats[docId] = existing;
         this.saveData(ASTRO_STATS_NAME, this.publishStats);
+    }
+
+    recordMomentPublish(metadata: MomentMetadata, filePath: string, previousSlug?: string): void {
+        const slug = metadata.slug;
+        if (!slug) {
+            return;
+        }
+
+        const metadataCopy = JSON.parse(JSON.stringify({
+            ...metadata,
+            images: metadata.images || [],
+            tags: metadata.tags || []
+        })) as MomentMetadata;
+
+        const record: MomentRecord = {
+            slug,
+            filePath,
+            createdAt: metadata.createdAt,
+            lastPublishedAt: new Date().toISOString(),
+            imageCount: metadata.images?.length || 0,
+            tags: metadata.tags || [],
+            metadata: metadataCopy
+        };
+
+        this.momentRecords[slug] = record;
+        if (previousSlug && previousSlug !== slug) {
+            delete this.momentRecords[previousSlug];
+        }
+        this.saveData(ASTRO_MOMENT_RECORDS_NAME, this.momentRecords);
+    }
+
+    recordAlbumPublish(metadata: AlbumMetadata, filePath: string, previousSlug?: string): void {
+        const slug = metadata.slug;
+        if (!slug) {
+            return;
+        }
+
+        const metadataCopy = JSON.parse(JSON.stringify(metadata)) as AlbumMetadata;
+
+        const record: AlbumRecord = {
+            slug,
+            filePath,
+            createdAt: metadata.createdAt,
+            lastPublishedAt: new Date().toISOString(),
+            photoCount: metadata.photos?.length || 0,
+            tags: metadata.tags || [],
+            cover: metadata.cover,
+            metadata: metadataCopy
+        };
+
+        this.albumRecords[slug] = record;
+        if (previousSlug && previousSlug !== slug) {
+            delete this.albumRecords[previousSlug];
+        }
+        this.saveData(ASTRO_ALBUM_RECORDS_NAME, this.albumRecords);
     }
 
     getDocumentTitle(editor: any): string {

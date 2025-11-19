@@ -1,5 +1,5 @@
 import { confirm, showMessage, getFrontend, getBackend } from "siyuan";
-import { STORAGE_NAME, ASTRO_CONFIG_NAME, ASTRO_STATS_NAME } from "../constants";
+import { STORAGE_NAME, ASTRO_CONFIG_NAME, ASTRO_STATS_NAME, ASTRO_MOMENT_RECORDS_NAME, ASTRO_ALBUM_RECORDS_NAME } from "../constants";
 import { createDefaultAstroConfig } from "../utils/metadata";
 import type PluginSample from "../index";
 
@@ -57,6 +57,16 @@ export function handleLayoutReady(plugin: PluginSample): void {
     plugin.loadData(ASTRO_STATS_NAME).then(stats => {
         if (stats) {
             plugin.publishStats = stats;
+        }
+    });
+    plugin.loadData(ASTRO_MOMENT_RECORDS_NAME).then(records => {
+        if (records) {
+            plugin.momentRecords = records;
+        }
+    });
+    plugin.loadData(ASTRO_ALBUM_RECORDS_NAME).then(records => {
+        if (records) {
+            plugin.albumRecords = records;
         }
     });
 

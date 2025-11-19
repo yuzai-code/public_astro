@@ -1,6 +1,6 @@
 import { Dialog, showMessage } from "siyuan";
 import type PluginSample from "../index";
-import type { AlbumMetadata, AlbumPhoto } from "../types";
+import type { AlbumMetadata, AlbumPhoto, AlbumRecord } from "../types";
 import { stripExistingFrontmatter } from "../utils/metadata";
 import { extractTagsFromContent } from "../utils/tags";
 import { buildAlbumSlug } from "../utils/albums";
@@ -49,7 +49,7 @@ function refreshPhotoTitles(container: HTMLElement, label: string): void {
     });
 }
 
-export async function openAlbumDialog(plugin: PluginSample): Promise<void> {
+export async function openAlbumDialog(plugin: PluginSample, existingRecord?: AlbumRecord, onPublished?: () => void): Promise<void> {
     const t = (key: string, fallback: string) => plugin.translate(key, fallback);
 
     if (!plugin.isAlbumConfigValid()) {
@@ -57,29 +57,41 @@ export async function openAlbumDialog(plugin: PluginSample): Promise<void> {
         return;
     }
 
-    const editor = plugin.getEditor();
-    if (!editor) {
-        showMessage(t("selectDocument", "请先打开一个文档"));
-        return;
-    }
-
-    const docId = editor.protyle.block.rootID;
-    const docTitle = plugin.getDocumentTitle(editor) || "album";
-
+    const isEditing = Boolean(existingRecord);
+    let docId = "";
+    let docTitle = "album";
     let documentContent = "";
     let extractedTags: string[] = [];
-    try {
-        const content = await plugin.getDocumentContent(docId);
-        documentContent = stripExistingFrontmatter(content).trim();
-        extractedTags = extractTagsFromContent(content);
-    } catch (error) {
-        console.warn("Failed to prepare album document content:", error);
+
+    if (isEditing && existingRecord) {
+        docId = existingRecord.slug || existingRecord.metadata.slug || "album";
+        docTitle = existingRecord.metadata.title || existingRecord.slug || "album";
+        documentContent = existingRecord.metadata.description || existingRecord.metadata.title || "";
+        extractedTags = existingRecord.metadata.tags || [];
+    } else {
+        const editor = plugin.getEditor();
+        if (!editor) {
+            showMessage(t("selectDocument", "请先打开一个文档"));
+            return;
+        }
+        docId = editor.protyle.block.rootID;
+        docTitle = plugin.getDocumentTitle(editor) || "album";
+        try {
+            const content = await plugin.getDocumentContent(docId);
+            documentContent = stripExistingFrontmatter(content).trim();
+            extractedTags = extractTagsFromContent(content);
+        } catch (error) {
+            console.warn("Failed to prepare album document content:", error);
+        }
     }
 
-    const nowIso = new Date().toISOString();
-    const initialCreatedAt = toDateTimeLocalValue(new Date(nowIso));
-    const defaultSlug = buildAlbumSlug(docTitle, nowIso, docId.slice(0, 6));
-    const defaultDescription = deriveDescription(documentContent, docTitle);
+    const initialMetadata = existingRecord?.metadata;
+    const createdAtIso = initialMetadata?.createdAt || new Date().toISOString();
+    const createdAtDate = new Date(createdAtIso);
+    const safeCreatedAt = Number.isNaN(createdAtDate.getTime()) ? new Date() : createdAtDate;
+    const initialCreatedAt = toDateTimeLocalValue(safeCreatedAt);
+    const defaultSlug = existingRecord?.slug || buildAlbumSlug(docTitle, createdAtIso, docId.slice(0, 6));
+    const defaultDescription = initialMetadata?.description || deriveDescription(documentContent, docTitle);
 
     const slugLabel = t("albumSlug", "文件名");
     const regenerateLabel = t("albumRegenerateSlug", "重新生成");
@@ -114,11 +126,13 @@ export async function openAlbumDialog(plugin: PluginSample): Promise<void> {
     const addPhotoLabel = t("albumAddPhoto", "添加照片");
     const removePhotoLabel = t("albumRemovePhoto", "删除");
     const cancelLabel = t("cancel", "取消");
-    const publishLabel = t("albumPublish", "发布相册");
+    const publishLabel = isEditing ? t("albumUpdate", "保存相册") : t("albumPublish", "发布相册");
     const publishingLabel = t("albumPublishing", "发布中...");
+    const dialogTitle = isEditing ? t("editAlbum", "编辑相册") : t("publishAlbum", "发布相册");
+    const successMessage = isEditing ? t("albumUpdateSuccess", "相册已更新") : t("albumPublishSuccess", "相册发布成功");
 
     const dialog = new Dialog({
-        title: t("publishAlbum", "发布相册"),
+        title: dialogTitle,
         content: `<div class="b3-dialog__content astro-publisher__publish-dialog">
     <div class="astro-publisher__dialog-body">
         <div class="fn__flex-column" style="gap: 12px;">
@@ -221,9 +235,14 @@ export async function openAlbumDialog(plugin: PluginSample): Promise<void> {
     const cancelBtn = dialog.element.querySelector(".b3-button--cancel") as HTMLButtonElement;
     const refreshBtn = dialog.element.querySelector("#albumSlugRefresh") as HTMLButtonElement;
 
-    if (extractedTags.length > 0) {
-        tagsInput.value = extractedTags.join(", ");
-    }
+    slugInput.value = defaultSlug;
+    createdAtInput.value = initialCreatedAt;
+    titleInput.value = initialMetadata?.title || docTitle;
+    descriptionInput.value = initialMetadata?.description || defaultDescription;
+    coverInput.value = initialMetadata?.cover || "";
+    locationInput.value = initialMetadata?.location || "";
+    aiSummaryInput.value = initialMetadata?.aiSummary || "";
+    tagsInput.value = ((initialMetadata?.tags && initialMetadata.tags.length > 0) ? initialMetadata.tags : extractedTags).join(", ");
 
     const addPhotoRow = (initial?: Partial<AlbumPhoto>) => {
         const wrapper = document.createElement("div");
@@ -296,14 +315,19 @@ export async function openAlbumDialog(plugin: PluginSample): Promise<void> {
         refreshPhotoTitles(photosContainer, photoLabel);
     };
 
-    addPhotoRow();
+    const initialPhotos = initialMetadata?.photos || [];
+    if (initialPhotos.length > 0) {
+        initialPhotos.forEach(photo => addPhotoRow(photo));
+    } else {
+        addPhotoRow();
+    }
 
     addPhotoBtn.addEventListener("click", () => {
         addPhotoRow();
     });
 
     let autoSlugValue = defaultSlug;
-    let userEditedSlug = false;
+    let userEditedSlug = Boolean(existingRecord);
 
     const updateSlug = () => {
         const createdAtIso = ensureIsoString(createdAtInput.value);
@@ -396,13 +420,13 @@ export async function openAlbumDialog(plugin: PluginSample): Promise<void> {
         const tags = parseListInput(tagsInput.value);
         const photos = collectPhotoData(photosContainer);
         const metadata: AlbumMetadata = {
-            slug: slugInput.value,
-            title: titleInput.value,
-            description: descriptionInput.value,
-            createdAt: createdAtInput.value,
-            cover: coverInput.value,
-            location: locationInput.value,
-            aiSummary: aiSummaryInput.value,
+            slug: slugInput.value.trim(),
+            title: titleInput.value.trim(),
+            description: descriptionInput.value.trim(),
+            createdAt: ensureIsoString(createdAtInput.value),
+            cover: coverInput.value.trim(),
+            location: locationInput.value.trim(),
+            aiSummary: aiSummaryInput.value.trim(),
             tags,
             photos
         };
@@ -410,8 +434,9 @@ export async function openAlbumDialog(plugin: PluginSample): Promise<void> {
         publishBtn.disabled = true;
         publishBtn.textContent = publishingLabel;
         try {
-            const filePath = await plugin.publishAlbum(metadata);
-            showMessage(`${t("albumPublishSuccess", "相册发布成功")}: ${filePath}`);
+            const filePath = await plugin.publishAlbum(metadata, existingRecord?.slug);
+            showMessage(`${successMessage}: ${filePath}`);
+            onPublished?.();
             dialog.destroy();
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);

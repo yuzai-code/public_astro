@@ -1,6 +1,6 @@
 import { Dialog, showMessage } from "siyuan";
 import type PluginSample from "../index";
-import type { MomentMetadata } from "../types";
+import type { MomentMetadata, MomentRecord } from "../types";
 import { stripExistingFrontmatter } from "../utils/metadata";
 import { extractTagsFromContent } from "../utils/tags";
 import { buildMomentSlug, ensureIsoString, parseListInput, slugifyMoment, toDateTimeLocalValue } from "../utils/moments";
@@ -10,7 +10,11 @@ function ensureContentPreview(content: string, fallback: string): string {
     return trimmed.length > 0 ? trimmed : fallback;
 }
 
-export async function openMomentDialog(plugin: PluginSample): Promise<void> {
+export async function openMomentDialog(
+    plugin: PluginSample,
+    existingRecord?: MomentRecord,
+    onPublished?: () => void
+): Promise<void> {
     const t = (key: string, fallback: string) => plugin.translate(key, fallback);
 
     if (!plugin.isMomentConfigValid()) {
@@ -18,28 +22,41 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
         return;
     }
 
-    const editor = plugin.getEditor();
-    if (!editor) {
-        showMessage(t("selectDocument", "请先打开一个文档"));
-        return;
-    }
+    const isEditing = Boolean(existingRecord);
 
-    const docId = editor.protyle.block.rootID;
-    const docTitle = plugin.getDocumentTitle(editor) || "moment";
-
+    let docId = "";
+    let docTitle = "moment";
     let documentContent = "";
     let extractedTags: string[] = [];
-    try {
-        const content = await plugin.getDocumentContent(docId);
-        documentContent = stripExistingFrontmatter(content).trim();
-        extractedTags = extractTagsFromContent(content);
-    } catch (error) {
-        console.warn("Failed to prepare document content for moments:", error);
+
+    if (isEditing && existingRecord) {
+        docId = existingRecord.slug || existingRecord.metadata.slug || "moment";
+        docTitle = existingRecord.slug || "moment";
+        documentContent = existingRecord.metadata.content || "";
+        extractedTags = existingRecord.metadata.tags || [];
+    } else {
+        const editor = plugin.getEditor();
+        if (!editor) {
+            showMessage(t("selectDocument", "请先打开一个文档"));
+            return;
+        }
+        docId = editor.protyle.block.rootID;
+        docTitle = plugin.getDocumentTitle(editor) || "moment";
+        try {
+            const content = await plugin.getDocumentContent(docId);
+            documentContent = stripExistingFrontmatter(content).trim();
+            extractedTags = extractTagsFromContent(content);
+        } catch (error) {
+            console.warn("Failed to prepare document content for moments:", error);
+        }
     }
 
-    const nowIso = new Date().toISOString();
-    const initialCreatedAt = toDateTimeLocalValue(new Date(nowIso));
-    const defaultSlug = buildMomentSlug(docTitle, nowIso, docId.slice(0, 6));
+    const initialMetadata = existingRecord?.metadata;
+    const createdAtIso = initialMetadata?.createdAt || new Date().toISOString();
+    const createdAtDate = new Date(createdAtIso);
+    const safeDate = Number.isNaN(createdAtDate.getTime()) ? new Date() : createdAtDate;
+    const initialCreatedAt = toDateTimeLocalValue(safeDate);
+    const defaultSlug = existingRecord?.slug || buildMomentSlug(docTitle, createdAtIso, docId.slice(0, 6));
 
     const slugLabel = t("momentSlug", "文件名");
     const regenerateLabel = t("momentRegenerateSlug", "重新生成");
@@ -50,7 +67,9 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
     const imagesPlaceholder = t("momentImagesDesc", "支持换行或逗号分隔多个链接");
     const uploadLabel = t("momentUploadFiles", "上传本地图片");
     const uploadButtonLabel = t("momentUploadBtn", "上传到对象存储");
-    const uploadHint = plugin.isS3UploadEnabled() ? t("momentUploadHint", "选择本地图片后上传，成功会自动填入链接") : t("momentUploadDisabled", "可直接粘贴图片链接，或在设置中配置对象存储以启用上传");
+    const uploadHint = plugin.isS3UploadEnabled()
+        ? t("momentUploadHint", "选择本地图片后上传，成功会自动填入链接")
+        : t("momentUploadDisabled", "可直接粘贴图片链接，或在设置中配置对象存储以启用上传");
     const uploadDisabled = plugin.isS3UploadEnabled() ? "" : "disabled";
     const locationLabel = t("momentLocation", "位置");
     const weatherLabel = t("momentWeather", "天气");
@@ -59,8 +78,9 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
     const tagsLabel = t("momentTags", "标签");
     const tagsPlaceholder = t("momentTagsPlaceholder", "旅行, 生活");
     const cancelLabel = t("cancel", "取消");
-    const publishLabel = t("momentPublish", "发布朋友圈");
-    const dialogTitle = t("publishMoment", "发布朋友圈");
+    const publishLabel = isEditing ? t("momentUpdate", "保存修改") : t("momentPublish", "发布朋友圈");
+    const dialogTitle = isEditing ? t("editMoment", "编辑朋友圈") : t("publishMoment", "发布朋友圈");
+    const successMessage = isEditing ? t("momentUpdateSuccess", "动态已更新") : t("momentPublishSuccess", "动态发布成功");
 
     const dialog = new Dialog({
         title: dialogTitle,
@@ -83,7 +103,7 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
         <label class="fn__flex b3-label">
             <div class="fn__flex-center fn__size200">${contentLabel}</div>
             <div class="fn__flex-1">
-                <textarea class="b3-text-field fn__flex-1" id="momentContent" rows="5" placeholder="${contentPlaceholder}">${ensureContentPreview(documentContent, docTitle)}</textarea>
+                <textarea class="b3-text-field fn__flex-1" id="momentContent" rows="5" placeholder="${contentPlaceholder}"></textarea>
             </div>
         </label>
         <label class="fn__flex b3-label">
@@ -157,12 +177,20 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
     const cancelBtn = dialog.element.querySelector(".b3-button--cancel") as HTMLButtonElement;
     const refreshBtn = dialog.element.querySelector("#momentSlugRefresh") as HTMLButtonElement;
 
+    contentInput.value = isEditing ? (initialMetadata?.content || "") : ensureContentPreview(documentContent, docTitle);
+    imagesInput.value = (initialMetadata?.images || []).join("\n");
+    locationInput.value = initialMetadata?.location || "";
+    weatherInput.value = initialMetadata?.weather || "";
+    moodInput.value = initialMetadata?.mood || "";
+    linkInput.value = initialMetadata?.link || "";
+    tagsInput.value = ((initialMetadata?.tags && initialMetadata.tags.length > 0) ? initialMetadata.tags : extractedTags).join(", ");
+
     let autoSlugValue = defaultSlug;
-    let userEditedSlug = false;
+    let userEditedSlug = Boolean(existingRecord);
 
     const updateSlug = () => {
-        const createdAtIso = ensureIsoString(createdAtInput.value);
-        autoSlugValue = buildMomentSlug(docTitle, createdAtIso, docId.slice(0, 6));
+        const createdAtIsoValue = ensureIsoString(createdAtInput.value);
+        autoSlugValue = buildMomentSlug(docTitle, createdAtIsoValue, docId.slice(0, 6));
         slugInput.value = autoSlugValue;
         userEditedSlug = false;
     };
@@ -180,10 +208,6 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
     refreshBtn.addEventListener("click", () => {
         updateSlug();
     });
-
-    if (extractedTags.length > 0) {
-        tagsInput.value = extractedTags.join(", ");
-    }
 
     const closeDialog = () => {
         dialog.destroy();
@@ -254,8 +278,9 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
         publishBtn.textContent = t("momentPublishing", "发布中...");
 
         try {
-            await plugin.publishMoment(metadata);
-            showMessage(t("momentPublishSuccess", "动态发布成功"), 4000);
+            await plugin.publishMoment(metadata, existingRecord?.slug);
+            showMessage(successMessage, 4000);
+            onPublished?.();
             closeDialog();
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
