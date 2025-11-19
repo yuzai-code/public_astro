@@ -17,6 +17,15 @@ export function openPluginMenu(plugin: PluginSample, rect?: DOMRect): void {
         }
     });
     menu.addItem({
+        icon: "iconFace",
+        label: plugin.i18n.publishMoment,
+        click: () => {
+            setTimeout(() => {
+                plugin.showMomentDialog();
+            }, 50);
+        }
+    });
+    menu.addItem({
         icon: "iconSparkles",
         label: plugin.i18n.publishStats,
         click: () => {

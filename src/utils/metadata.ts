@@ -41,6 +41,7 @@ export function createDefaultAstroConfig(): AstroConfig {
         githubRepo: "",
         astroContentPath: "src/content/posts",
         categoriesPath: "src/content/categories",
+        momentsPath: "src/content/moments",
         yamlTemplate: `---
 title: "{title}"
 description: "{description}"

@@ -63,6 +63,14 @@ export function initializePlugin(plugin: PluginSample): void {
     });
 
     plugin.addCommand({
+        langKey: "publishMoment",
+        hotkey: "",
+        callback: () => {
+            plugin.showMomentDialog();
+        }
+    });
+
+    plugin.addCommand({
         langKey: "publishStats",
         hotkey: "",
         callback: () => {
@@ -76,6 +84,7 @@ export function initializePlugin(plugin: PluginSample): void {
     const githubRepoElement = document.createElement("input");
     const astroPathElement = document.createElement("input");
     const categoriesPathElement = document.createElement("input");
+    const momentsPathElement = document.createElement("input");
     const yamlTemplateElement = document.createElement("textarea");
 
     plugin.setting = new Setting({
@@ -87,6 +96,7 @@ export function initializePlugin(plugin: PluginSample): void {
                 githubRepo: githubRepoElement.value,
                 astroContentPath: astroPathElement.value,
                 categoriesPath: categoriesPathElement.value,
+                momentsPath: momentsPathElement.value,
                 yamlTemplate: yamlTemplateElement.value,
                 customFields: plugin.astroConfig.customFields || []
             };
@@ -147,6 +157,17 @@ export function initializePlugin(plugin: PluginSample): void {
             categoriesPathElement.placeholder = "src/content/categories";
             categoriesPathElement.value = plugin.astroConfig.categoriesPath;
             return categoriesPathElement;
+        }
+    });
+
+    plugin.setting.addItem({
+        title: plugin.i18n.momentsPath,
+        description: plugin.i18n.momentsPathDesc,
+        createActionElement: () => {
+            momentsPathElement.className = "b3-text-field fn__block";
+            momentsPathElement.placeholder = "src/content/moments";
+            momentsPathElement.value = plugin.astroConfig.momentsPath;
+            return momentsPathElement;
         }
     });
 

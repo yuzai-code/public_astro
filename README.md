@@ -12,6 +12,7 @@ A SiYuan plugin that allows you to publish your notes directly to an Astro blog 
 - 📅 Automatic date handling
 - 🔄 Update existing posts
 - ⚙️ Easy GitHub configuration
+- 📸 Publish "moments" JSON entries to custom directories
 
 ## Setup
 

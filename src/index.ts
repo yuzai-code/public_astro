@@ -16,7 +16,7 @@ import "./index.scss";
 import {IMenuItem} from "siyuan/types";
 
 import {STORAGE_NAME, ASTRO_CONFIG_NAME, ASTRO_STATS_NAME, TAB_TYPE} from "./constants";
-import type {AstroConfig, Category, PublishMetadata, PublishStat} from "./types";
+import type {AstroConfig, Category, MomentMetadata, PublishMetadata, PublishStat} from "./types";
 import {
     generateFrontmatter,
     getPostFilePath,
@@ -29,6 +29,7 @@ import {openPublishDialog} from "./ui/publishDialog";
 import {openPublishStatsDialog} from "./ui/publishStats";
 import {openPluginMenu} from "./ui/menu";
 import {openCategoryDialog} from "./ui/categoryDialog";
+import {openMomentDialog} from "./ui/momentDialog";
 import {
     deleteCategory as serviceDeleteCategory,
     deletePublishedFile as serviceDeletePublishedFile,
@@ -38,6 +39,7 @@ import {
     testGitHubConnection as serviceTestGitHubConnection,
     uploadToGitHub
 } from "./services/githubService";
+import { buildMomentPayload, ensureIsoString, slugifyMoment } from "./utils/moments";
 
 export default class PluginSample extends Plugin {
 
@@ -175,6 +177,10 @@ export default class PluginSample extends Plugin {
         openPublishDialog(this);
     }
 
+    showMomentDialog() {
+        openMomentDialog(this);
+    }
+
     showPublishStats() {
         openPublishStatsDialog(this);
     }
@@ -192,7 +198,16 @@ export default class PluginSample extends Plugin {
         );
     }
 
-    private async getDocumentContent(blockId: string): Promise<string> {
+    isMomentConfigValid(): boolean {
+        return Boolean(
+            this.astroConfig?.githubToken &&
+            this.astroConfig?.githubOwner &&
+            this.astroConfig?.githubRepo &&
+            this.astroConfig?.momentsPath
+        );
+    }
+
+    async getDocumentContent(blockId: string): Promise<string> {
         return new Promise((resolve, reject) => {
             fetchPost("/api/export/exportMdContent", {
                 id: blockId
@@ -228,6 +243,40 @@ export default class PluginSample extends Plugin {
         const existingFile = await getFileFromGitHub(this.astroConfig, filePath);
         const message = `${existingFile ? "Update" : "Add"} post: ${filePath}`;
         await uploadToGitHub(this.astroConfig, filePath, fullContent, message, existingFile?.sha);
+        return filePath;
+    }
+
+    async publishMoment(metadata: MomentMetadata): Promise<string> {
+        if (!this.isMomentConfigValid()) {
+            throw new Error(this.i18n.momentConfigRequired || this.i18n.configRequired);
+        }
+
+        const slug = slugifyMoment(metadata.slug?.replace(/\.json$/i, "") || "");
+        const resolvedSlug = slug || `moment-${Date.now()}`;
+        const basePath = (this.astroConfig.momentsPath || "src/content/moments").replace(/\/+$/, "");
+        const filePath = `${basePath}/${resolvedSlug}.json`;
+
+        const normalized: MomentMetadata = {
+            slug: resolvedSlug,
+            content: metadata.content?.trim() || "",
+            createdAt: ensureIsoString(metadata.createdAt),
+            images: metadata.images || [],
+            location: metadata.location?.trim() || "",
+            weather: metadata.weather?.trim() || "",
+            link: metadata.link?.trim() || "",
+            mood: metadata.mood?.trim() || "",
+            tags: metadata.tags || []
+        };
+
+        if (!normalized.content) {
+            throw new Error(this.i18n.momentContentRequired || "Content is required");
+        }
+
+        const payload = buildMomentPayload(normalized);
+        const existingFile = await getFileFromGitHub(this.astroConfig, filePath);
+        const message = `${existingFile ? "Update" : "Add"} moment: ${resolvedSlug}`;
+        const jsonContent = `${JSON.stringify(payload, null, 4)}\n`;
+        await uploadToGitHub(this.astroConfig, filePath, jsonContent, message, existingFile?.sha);
         return filePath;
     }
 
@@ -386,7 +435,7 @@ export default class PluginSample extends Plugin {
         this.saveData(ASTRO_STATS_NAME, this.publishStats);
     }
 
-    private getDocumentTitle(editor: any): string {
+    getDocumentTitle(editor: any): string {
         try {
             if (typeof editor.protyle.title === "string") {
                 return editor.protyle.title;
