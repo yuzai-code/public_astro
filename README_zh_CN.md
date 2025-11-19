@@ -13,6 +13,7 @@
 - 🔄 更新已存在的文章
 - ⚙️ 简单的 GitHub 配置
 - 📸 支持发布 Moments JSON 动态
+- 🖼️ 支持发布 content/albums 相册并上传多张图片到 COS/S3
 
 ## 设置
 

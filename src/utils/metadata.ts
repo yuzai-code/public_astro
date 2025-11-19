@@ -42,6 +42,7 @@ export function createDefaultAstroConfig(): AstroConfig {
         astroContentPath: "src/content/posts",
         categoriesPath: "src/content/categories",
         momentsPath: "src/content/moments",
+        albumsPath: "src/content/albums",
         yamlTemplate: `---
 title: "{title}"
 description: "{description}"

@@ -71,6 +71,14 @@ export function initializePlugin(plugin: PluginSample): void {
     });
 
     plugin.addCommand({
+        langKey: "publishAlbum",
+        hotkey: "",
+        callback: () => {
+            plugin.showAlbumDialog();
+        }
+    });
+
+    plugin.addCommand({
         langKey: "publishStats",
         hotkey: "",
         callback: () => {
@@ -85,6 +93,7 @@ export function initializePlugin(plugin: PluginSample): void {
     const astroPathElement = document.createElement("input");
     const categoriesPathElement = document.createElement("input");
     const momentsPathElement = document.createElement("input");
+    const albumsPathElement = document.createElement("input");
     const yamlTemplateElement = document.createElement("textarea");
     const s3EnabledElement = document.createElement("input");
     const s3AccessKeyElement = document.createElement("input");
@@ -105,6 +114,7 @@ export function initializePlugin(plugin: PluginSample): void {
                 astroContentPath: astroPathElement.value,
                 categoriesPath: categoriesPathElement.value,
                 momentsPath: momentsPathElement.value,
+                albumsPath: albumsPathElement.value,
                 yamlTemplate: yamlTemplateElement.value,
                 customFields: plugin.astroConfig.customFields || [],
                 s3Enabled: s3EnabledElement.checked,
@@ -184,6 +194,17 @@ export function initializePlugin(plugin: PluginSample): void {
             momentsPathElement.placeholder = "src/content/moments";
             momentsPathElement.value = plugin.astroConfig.momentsPath;
             return momentsPathElement;
+        }
+    });
+
+    plugin.setting.addItem({
+        title: plugin.i18n.albumsPath,
+        description: plugin.i18n.albumsPathDesc,
+        createActionElement: () => {
+            albumsPathElement.className = "b3-text-field fn__block";
+            albumsPathElement.placeholder = "src/content/albums";
+            albumsPathElement.value = plugin.astroConfig.albumsPath;
+            return albumsPathElement;
         }
     });
 

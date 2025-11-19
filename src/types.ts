@@ -5,6 +5,7 @@ export interface AstroConfig {
     astroContentPath: string;
     categoriesPath: string;
     momentsPath: string;
+    albumsPath: string;
     yamlTemplate: string;
     customFields: CustomField[];
     s3Enabled: boolean;
@@ -66,4 +67,25 @@ export interface MomentMetadata {
     link?: string;
     mood?: string;
     tags: string[];
+}
+
+export interface AlbumPhoto {
+    src: string;
+    caption?: string;
+    takenAt?: string;
+    location?: string;
+    tags?: string[];
+    aiNote?: string;
+}
+
+export interface AlbumMetadata {
+    slug: string;
+    title: string;
+    description: string;
+    createdAt: string;
+    cover: string;
+    location?: string;
+    aiSummary?: string;
+    tags: string[];
+    photos: AlbumPhoto[];
 }

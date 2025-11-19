@@ -205,7 +205,7 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
             uploadBtn.textContent = t("momentUploadProgress", "上传中...");
 
             try {
-                const urls = await plugin.uploadMomentImages(Array.from(fileInput.files));
+                const urls = await plugin.uploadImagesToS3(Array.from(fileInput.files));
                 const existing = parseListInput(imagesInput.value);
                 const merged = Array.from(new Set([...existing, ...urls]));
                 imagesInput.value = merged.join("\n");

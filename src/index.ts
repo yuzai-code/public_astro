@@ -16,7 +16,7 @@ import "./index.scss";
 import {IMenuItem} from "siyuan/types";
 
 import {STORAGE_NAME, ASTRO_CONFIG_NAME, ASTRO_STATS_NAME, TAB_TYPE} from "./constants";
-import type {AstroConfig, Category, MomentMetadata, PublishMetadata, PublishStat} from "./types";
+import type {AstroConfig, Category, MomentMetadata, PublishMetadata, PublishStat, AlbumMetadata} from "./types";
 import {
     generateFrontmatter,
     getPostFilePath,
@@ -30,6 +30,7 @@ import {openPublishStatsDialog} from "./ui/publishStats";
 import {openPluginMenu} from "./ui/menu";
 import {openCategoryDialog} from "./ui/categoryDialog";
 import {openMomentDialog} from "./ui/momentDialog";
+import { openAlbumDialog } from "./ui/albumDialog";
 import {
     deleteCategory as serviceDeleteCategory,
     deletePublishedFile as serviceDeletePublishedFile,
@@ -40,6 +41,7 @@ import {
     uploadToGitHub
 } from "./services/githubService";
 import { buildMomentPayload, ensureIsoString, slugifyMoment } from "./utils/moments";
+import { buildAlbumPayload } from "./utils/albums";
 import { uploadFileToS3 } from "./services/s3Service";
 
 export default class PluginSample extends Plugin {
@@ -182,6 +184,10 @@ export default class PluginSample extends Plugin {
         openMomentDialog(this);
     }
 
+    showAlbumDialog() {
+        openAlbumDialog(this);
+    }
+
     showPublishStats() {
         openPublishStatsDialog(this);
     }
@@ -208,6 +214,15 @@ export default class PluginSample extends Plugin {
         );
     }
 
+    isAlbumConfigValid(): boolean {
+        return Boolean(
+            this.astroConfig?.githubToken &&
+            this.astroConfig?.githubOwner &&
+            this.astroConfig?.githubRepo &&
+            this.astroConfig?.albumsPath
+        );
+    }
+
     isS3UploadEnabled(): boolean {
         const config = this.astroConfig;
         if (!config) {
@@ -222,7 +237,7 @@ export default class PluginSample extends Plugin {
         );
     }
 
-    async uploadMomentImages(files: File[]): Promise<string[]> {
+    async uploadImagesToS3(files: File[]): Promise<string[]> {
         if (!this.isS3UploadEnabled()) {
             throw new Error(this.translate("s3ConfigRequired", "请先配置对象存储"));
         }
@@ -302,6 +317,53 @@ export default class PluginSample extends Plugin {
         const payload = buildMomentPayload(normalized);
         const existingFile = await getFileFromGitHub(this.astroConfig, filePath);
         const message = `${existingFile ? "Update" : "Add"} moment: ${resolvedSlug}`;
+        const jsonContent = `${JSON.stringify(payload, null, 4)}\n`;
+        await uploadToGitHub(this.astroConfig, filePath, jsonContent, message, existingFile?.sha);
+        return filePath;
+    }
+
+    async publishAlbum(metadata: AlbumMetadata): Promise<string> {
+        if (!this.isAlbumConfigValid()) {
+            throw new Error(this.i18n.albumConfigRequired || this.i18n.configRequired);
+        }
+
+        const slug = slugifyMoment(metadata.slug?.replace(/\.json$/i, "") || "");
+        const resolvedSlug = slug || `album-${Date.now()}`;
+        const basePath = (this.astroConfig.albumsPath || "src/content/albums").replace(/\/+$/, "");
+        const filePath = `${basePath}/${resolvedSlug}.json`;
+
+        const normalized: AlbumMetadata = {
+            slug: resolvedSlug,
+            title: metadata.title?.trim() || "",
+            description: metadata.description?.trim() || "",
+            createdAt: ensureIsoString(metadata.createdAt),
+            cover: metadata.cover?.trim() || "",
+            location: metadata.location?.trim() || "",
+            aiSummary: metadata.aiSummary?.trim() || "",
+            tags: (metadata.tags || []).map(tag => tag.trim()).filter(tag => tag.length > 0),
+            photos: metadata.photos || []
+        };
+
+        if (!normalized.title) {
+            throw new Error(this.i18n.albumTitleRequired || "Title is required");
+        }
+        if (!normalized.description) {
+            throw new Error(this.i18n.albumDescriptionRequired || "Description is required");
+        }
+        if (!normalized.cover) {
+            throw new Error(this.i18n.albumCoverRequired || "Cover is required");
+        }
+        if (!normalized.photos || normalized.photos.length === 0) {
+            throw new Error(this.i18n.albumPhotosRequired || "At least one photo is required");
+        }
+
+        const payload = buildAlbumPayload(normalized);
+        const normalizedPhotos = (payload.photos || []) as AlbumMetadata["photos"];
+        if (!normalizedPhotos || normalizedPhotos.length === 0) {
+            throw new Error(this.i18n.albumPhotosRequired || "At least one photo is required");
+        }
+        const existingFile = await getFileFromGitHub(this.astroConfig, filePath);
+        const message = `${existingFile ? "Update" : "Add"} album: ${resolvedSlug}`;
         const jsonContent = `${JSON.stringify(payload, null, 4)}\n`;
         await uploadToGitHub(this.astroConfig, filePath, jsonContent, message, existingFile?.sha);
         return filePath;

@@ -455,6 +455,49 @@
   }
 }
 
+.astro-album {
+  &__photos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  &__photo {
+    border: 1px solid var(--b3-border-color);
+    border-radius: 8px;
+    padding: 12px;
+    background-color: var(--b3-theme-surface);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  &__photo-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  &__photo-title {
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  &__photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .astro-album__photo .b3-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
 .astro-stats {
   display: flex;
   flex-direction: column;
