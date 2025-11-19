@@ -8,6 +8,8 @@ import { createDefaultAstroConfig } from "../utils/metadata";
 import type PluginSample from "../index";
 
 export function initializePlugin(plugin: PluginSample): void {
+    const t = (key: string, fallback: string) => plugin.translate(key, fallback);
+
     plugin.data[STORAGE_NAME] = {readonlyText: "Readonly"};
 
     plugin.astroConfig = createDefaultAstroConfig();
@@ -176,8 +178,8 @@ export function initializePlugin(plugin: PluginSample): void {
     });
 
     plugin.setting.addItem({
-        title: plugin.i18n.categoriesPath,
-        description: plugin.i18n.categoriesPathDesc,
+        title: t("categoriesPath", "分类文件路径"),
+        description: t("categoriesPathDesc", "存储分类文件的目录路径"),
         createActionElement: () => {
             categoriesPathElement.className = "b3-text-field fn__block";
             categoriesPathElement.placeholder = "src/content/categories";
@@ -187,8 +189,8 @@ export function initializePlugin(plugin: PluginSample): void {
     });
 
     plugin.setting.addItem({
-        title: plugin.i18n.momentsPath,
-        description: plugin.i18n.momentsPathDesc,
+        title: t("momentsPath", "Moments 目录"),
+        description: t("momentsPathDesc", "存放朋友圈 JSON 文件的目录"),
         createActionElement: () => {
             momentsPathElement.className = "b3-text-field fn__block";
             momentsPathElement.placeholder = "src/content/moments";
@@ -198,8 +200,8 @@ export function initializePlugin(plugin: PluginSample): void {
     });
 
     plugin.setting.addItem({
-        title: plugin.i18n.albumsPath,
-        description: plugin.i18n.albumsPathDesc,
+        title: t("albumsPath", "相册目录"),
+        description: t("albumsPathDesc", "存放 content/albums JSON 的目录"),
         createActionElement: () => {
             albumsPathElement.className = "b3-text-field fn__block";
             albumsPathElement.placeholder = "src/content/albums";
@@ -209,8 +211,8 @@ export function initializePlugin(plugin: PluginSample): void {
     });
 
     plugin.setting.addItem({
-        title: plugin.i18n.s3UploadTitle,
-        description: plugin.i18n.s3UploadDesc,
+        title: t("s3UploadTitle", "对象存储（S3/COS）"),
+        description: t("s3UploadDesc", "配置腾讯云对象存储或其他 S3 服务，用于上传朋友圈图片"),
         createActionElement: () => {
             const container = document.createElement("div");
             container.className = "fn__flex-column";
@@ -222,7 +224,7 @@ export function initializePlugin(plugin: PluginSample): void {
             s3EnabledElement.type = "checkbox";
             s3EnabledElement.checked = Boolean(plugin.astroConfig.s3Enabled);
             const toggleText = document.createElement("span");
-            toggleText.textContent = plugin.i18n.s3EnableUploads;
+            toggleText.textContent = t("s3EnableUploads", "启用上传");
             toggleRow.appendChild(s3EnabledElement);
             toggleRow.appendChild(toggleText);
             container.appendChild(toggleRow);
@@ -248,37 +250,37 @@ export function initializePlugin(plugin: PluginSample): void {
             };
 
             s3AccessKeyElement.value = plugin.astroConfig.s3AccessKeyId || "";
-            buildInputRow(plugin.i18n.s3AccessKeyId, s3AccessKeyElement, "AKIDxxxxxxxx", "text");
+            buildInputRow(t("s3AccessKeyId", "SecretId / Access Key"), s3AccessKeyElement, "AKIDxxxxxxxx", "text");
 
             s3SecretKeyElement.value = plugin.astroConfig.s3SecretAccessKey || "";
-            buildInputRow(plugin.i18n.s3SecretAccessKey, s3SecretKeyElement, "xxxxxxxxxxxx", "password");
+            buildInputRow(t("s3SecretAccessKey", "SecretKey / Secret Access Key"), s3SecretKeyElement, "xxxxxxxxxxxx", "password");
 
             s3BucketElement.value = plugin.astroConfig.s3Bucket || "";
-            buildInputRow(plugin.i18n.s3Bucket, s3BucketElement, "example-1250000000");
+            buildInputRow(t("s3Bucket", "存储桶"), s3BucketElement, "example-1250000000");
 
             s3RegionElement.value = plugin.astroConfig.s3Region || "";
-            buildInputRow(plugin.i18n.s3Region, s3RegionElement, "ap-shanghai");
+            buildInputRow(t("s3Region", "地域"), s3RegionElement, "ap-shanghai");
 
             s3EndpointElement.value = plugin.astroConfig.s3Endpoint || "";
-            buildInputRow(plugin.i18n.s3Endpoint, s3EndpointElement, "https://cos.ap-shanghai.myqcloud.com", "text", plugin.i18n.s3EndpointDesc);
+            buildInputRow(t("s3Endpoint", "自定义 Endpoint"), s3EndpointElement, "https://cos.ap-shanghai.myqcloud.com", "text", t("s3EndpointDesc", "可选，例：https://cos.ap-shanghai.myqcloud.com 或自定义域名"));
 
             s3PublicBaseElement.value = plugin.astroConfig.s3PublicBaseUrl || "";
-            buildInputRow(plugin.i18n.s3PublicBaseUrl, s3PublicBaseElement, "https://cdn.example.com", "text", plugin.i18n.s3PublicBaseUrlDesc);
+            buildInputRow(t("s3PublicBaseUrl", "公网访问域名"), s3PublicBaseElement, "https://cdn.example.com", "text", t("s3PublicBaseUrlDesc", "可选，填入 CDN/自定义域名用于最终链接"));
 
             s3RootPathElement.value = plugin.astroConfig.s3RootPath || "";
-            buildInputRow(plugin.i18n.s3RootPath, s3RootPathElement, "uploads/moments", "text", plugin.i18n.s3RootPathDesc);
+            buildInputRow(t("s3RootPath", "上传目录前缀"), s3RootPathElement, "uploads/moments", "text", t("s3RootPathDesc", "可选，例如 uploads/moments"));
 
             return container;
         }
     });
 
     plugin.setting.addItem({
-        title: plugin.i18n.testConnection,
-        description: plugin.i18n.testConnectionDesc,
+        title: t("testConnection", "测试连接"),
+        description: t("testConnectionDesc", "测试 GitHub 连接"),
         createActionElement: () => {
             const testButton = document.createElement("button");
             testButton.className = "b3-button b3-button--outline fn__flex-center astro-publisher__test-btn";
-            testButton.textContent = plugin.i18n.testConnection;
+            testButton.textContent = t("testConnection", "测试连接");
             testButton.addEventListener("click", async () => {
                 await plugin.testGitHubConnection(testButton);
             });
@@ -287,8 +289,8 @@ export function initializePlugin(plugin: PluginSample): void {
     });
 
     plugin.setting.addItem({
-        title: plugin.i18n.yamlTemplate,
-        description: plugin.i18n.yamlTemplateDesc,
+        title: t("yamlTemplate", "YAML 模板"),
+        description: t("yamlTemplateDesc", "自定义 YAML 前言模板"),
         createActionElement: () => {
             const container = document.createElement("div");
             container.className = "fn__flex-column";
@@ -309,7 +311,7 @@ author: "Your Name"
 
             const resetButton = document.createElement("button");
             resetButton.className = "b3-button b3-button--outline fn__size200";
-            resetButton.textContent = plugin.i18n.resetYamlTemplate;
+            resetButton.textContent = t("resetYamlTemplate", "重置 YAML 模板");
             resetButton.style.marginTop = "8px";
             resetButton.addEventListener("click", () => {
                 yamlTemplateElement.value = `---
@@ -329,8 +331,8 @@ draft: {draft}
     });
 
     plugin.setting.addItem({
-        title: plugin.i18n.customFieldConfig || "Additional Fields",
-        description: plugin.i18n.customFieldConfigDesc || "Configure extra frontmatter fields shown in the publish dialog.",
+        title: t("customFieldConfig", "自定义字段配置"),
+        description: t("customFieldConfigDesc", "配置发布时的自定义字段"),
         createActionElement: () => {
             const container = document.createElement("div");
             container.className = "astro-setting__custom-fields fn__flex-column";
@@ -353,7 +355,7 @@ draft: {draft}
                 if (plugin.astroConfig.customFields.length === 0) {
                     const empty = document.createElement("div");
                     empty.className = "b3-label fn__flex-center";
-                    empty.textContent = plugin.i18n.noCustomFields || "No custom fields configured";
+                    empty.textContent = t("noCustomFields", "暂无自定义字段");
                     empty.style.minHeight = "36px";
                     empty.style.background = "var(--b3-theme-surface-lighter)";
                     empty.style.borderRadius = "4px";
@@ -374,7 +376,7 @@ draft: {draft}
 
                     const nameInput = document.createElement("input");
                     nameInput.className = "b3-text-field";
-                    nameInput.placeholder = plugin.i18n.fieldName;
+                    nameInput.placeholder = t("fieldName", "字段名");
                     nameInput.value = field.name || "";
                     nameInput.style.minWidth = "140px";
                     nameInput.addEventListener("input", () => {
@@ -383,7 +385,7 @@ draft: {draft}
 
                     const labelInput = document.createElement("input");
                     labelInput.className = "b3-text-field";
-                    labelInput.placeholder = plugin.i18n.fieldLabel || "Label";
+                    labelInput.placeholder = t("fieldLabel", "字段标签");
                     labelInput.value = field.label || "";
                     labelInput.style.minWidth = "140px";
                     labelInput.addEventListener("input", () => {
@@ -392,7 +394,7 @@ draft: {draft}
 
                     const placeholderInput = document.createElement("input");
                     placeholderInput.className = "b3-text-field";
-                    placeholderInput.placeholder = plugin.i18n.fieldPlaceholder || "Placeholder";
+                    placeholderInput.placeholder = t("fieldPlaceholder", "占位符");
                     placeholderInput.value = field.placeholder || "";
                     placeholderInput.style.minWidth = "160px";
                     placeholderInput.addEventListener("input", () => {
@@ -401,7 +403,7 @@ draft: {draft}
 
                     const defaultInput = document.createElement("input");
                     defaultInput.className = "b3-text-field";
-                    defaultInput.placeholder = plugin.i18n.fieldDefaultValue || "Default";
+                    defaultInput.placeholder = t("fieldDefaultValue", "默认值");
                     defaultInput.value = field.defaultValue || "";
                     defaultInput.style.minWidth = "140px";
                     defaultInput.addEventListener("input", () => {
@@ -432,14 +434,14 @@ draft: {draft}
                         plugin.astroConfig.customFields[index].required = requiredInput.checked;
                     });
                     const requiredLabel = document.createElement("span");
-                    requiredLabel.textContent = plugin.i18n.fieldRequired || "Required";
+                    requiredLabel.textContent = t("fieldRequired", "必填");
                     requiredWrapper.appendChild(requiredInput);
                     requiredWrapper.appendChild(requiredLabel);
 
                     const removeBtn = document.createElement("button");
                     removeBtn.className = "b3-button b3-button--cancel";
                     removeBtn.textContent = "×";
-                    removeBtn.title = plugin.i18n.removeField;
+                    removeBtn.title = t("removeField", "移除字段");
                     removeBtn.addEventListener("click", () => {
                         plugin.astroConfig.customFields.splice(index, 1);
                         render();
@@ -459,7 +461,7 @@ draft: {draft}
 
             const addBtn = document.createElement("button");
             addBtn.className = "b3-button b3-button--outline fn__size200";
-            addBtn.textContent = plugin.i18n.addField || "Add Field";
+            addBtn.textContent = t("addField", "添加字段");
             addBtn.addEventListener("click", () => {
                 ensureArray();
                 plugin.astroConfig.customFields.push({
@@ -482,8 +484,8 @@ draft: {draft}
     });
 
     plugin.setting.addItem({
-        title: plugin.i18n.categoryManagement,
-        description: plugin.i18n.categoryManagementDesc,
+        title: t("categoryManagement", "分类管理"),
+        description: t("categoryManagementDesc", "管理文章分类"),
         createActionElement: () => {
             const container = document.createElement("div");
             container.className = "fn__flex astro-publisher__category-dropdown";
@@ -492,7 +494,7 @@ draft: {draft}
 
             const categorySelect = document.createElement("select");
             categorySelect.className = "b3-select fn__flex-1";
-            categorySelect.innerHTML = `<option value="">${plugin.i18n.selectCategory}</option>`;
+            categorySelect.innerHTML = `<option value="">${t("selectCategory", "选择分类")}</option>`;
 
             const buttonsContainer = document.createElement("div");
             buttonsContainer.className = "fn__flex category-action-buttons";
@@ -501,28 +503,28 @@ draft: {draft}
             const refreshBtn = document.createElement("button");
             refreshBtn.className = "b3-button b3-button--outline b3-button--small";
             refreshBtn.innerHTML = "🔄";
-            refreshBtn.title = plugin.i18n.refreshCategories;
+            refreshBtn.title = t("refreshCategories", "刷新分类");
 
             const addBtn = document.createElement("button");
             addBtn.className = "b3-button b3-button--outline b3-button--small";
             addBtn.innerHTML = "➕";
-            addBtn.title = plugin.i18n.addCategory;
+            addBtn.title = t("addCategory", "添加分类");
 
             const editBtn = document.createElement("button");
             editBtn.className = "b3-button b3-button--outline b3-button--small";
             editBtn.innerHTML = "✏️";
-            editBtn.title = plugin.i18n.editCategory;
+            editBtn.title = t("editCategory", "编辑分类");
             editBtn.disabled = true;
 
             const deleteBtn = document.createElement("button");
             deleteBtn.className = "b3-button b3-button--cancel b3-button--small";
             deleteBtn.innerHTML = "🗑️";
-            deleteBtn.title = plugin.i18n.deleteCategory;
+            deleteBtn.title = t("deleteCategory", "删除分类");
             deleteBtn.disabled = true;
 
             const updateCategorySelect = () => {
                 const selectedValue = categorySelect.value;
-                categorySelect.innerHTML = `<option value="">${plugin.i18n.selectCategory}</option>`;
+                categorySelect.innerHTML = `<option value="">${t("selectCategory", "选择分类")}</option>`;
                 plugin.categories.forEach(category => {
                     const option = document.createElement("option");
                     option.value = category.name;
@@ -552,7 +554,7 @@ draft: {draft}
                     console.log("Loaded categories:", plugin.categories);
                 } catch (error) {
                     const message = error instanceof Error ? error.message : String(error);
-                    showMessage(plugin.i18n.categoryOperationFailed.replace("${error}", message));
+                    showMessage(t("categoryOperationFailed", "分类操作失败：${error}").replace("${error}", message));
                     refreshBtn.innerHTML = "🔄";
                     refreshBtn.disabled = false;
                 }
@@ -590,14 +592,14 @@ draft: {draft}
                         deleteBtn.disabled = true;
 
                         await plugin.deleteCategory(category.name);
-                        showMessage(plugin.i18n.categoryDeleted);
+                        showMessage(t("categoryDeleted", "分类已删除"));
                         await plugin.loadCategories();
                         updateCategorySelect();
 
                         deleteBtn.innerHTML = "🗑️";
                     } catch (error) {
                         const message = error instanceof Error ? error.message : String(error);
-                        showMessage(plugin.i18n.categoryOperationFailed.replace("${error}", message));
+                        showMessage(t("categoryOperationFailed", "分类操作失败：${error}").replace("${error}", message));
                         deleteBtn.innerHTML = "🗑️";
                         deleteBtn.disabled = false;
                     }
@@ -627,7 +629,7 @@ draft: {draft}
 
     plugin.protyleSlash = [{
         filter: ["insert emoji 😊", "插入表情 😊", "crbqwx"],
-        html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${plugin.i18n.insertEmoji}</span><span class="b3-list-item__meta">😊</span></div>`,
+        html: `<div class="b3-list-item__first"><span class="b3-list-item__text">${t("insertEmoji", "插入表情")}</span><span class="b3-list-item__meta">😊</span></div>`,
         id: "insertEmoji",
         callback(protyle) {
             protyle.insert("😊");
@@ -656,5 +658,5 @@ draft: {draft}
         ]
     };
 
-    console.log(plugin.i18n.helloPlugin);
+    console.log(t("helloPlugin", "你好，插件！"));
 }

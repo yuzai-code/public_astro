@@ -5,6 +5,8 @@ import { formatDateTime } from "../utils/metadata";
 import { ASTRO_STATS_NAME } from "../constants";
 
 export function openPublishStatsDialog(plugin: PluginSample): void {
+    const t = (key: string, fallback: string) => plugin.translate(key, fallback);
+
     const stats: PublishStat[] = Object.keys(plugin.publishStats).map(docId => {
         const stat = plugin.publishStats[docId];
         return {
@@ -59,13 +61,13 @@ export function openPublishStatsDialog(plugin: PluginSample): void {
         : `<tr><td colspan="6" class="astro-stats__empty">${emptyLabel}</td></tr>`;
 
     const dialog = new Dialog({
-        title: `📈 ${plugin.i18n.publishStats}`,
+        title: `📈 ${t("publishStats", "发布统计")}`,
         content: `<div class="b3-dialog__content astro-stats">
     <div class="astro-stats__header">
-        <input id="astroStatsSearch" class="b3-text-field astro-stats__search" type="search" placeholder="${plugin.i18n.searchPlaceholder || "搜索标题、分类或标签"}" />
+        <input id="astroStatsSearch" class="b3-text-field astro-stats__search" type="search" placeholder="${t("searchPlaceholder", "搜索标题、分类或标签")}" />
         <label class="astro-stats__checkbox">
             <input type="checkbox" id="astroStatsDraftOnly" />
-            <span>${plugin.i18n.draftOnly || "仅草稿"}</span>
+            <span>${t("draftOnly", "仅草稿")}</span>
         </label>
         <div class="astro-stats__summary" id="astroStatsSummary"></div>
     </div>
@@ -74,11 +76,11 @@ export function openPublishStatsDialog(plugin: PluginSample): void {
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>${plugin.i18n.documentTitle}</th>
-                    <th>${plugin.i18n.description}</th>
-                    <th>${plugin.i18n.lastPublishedAt || "最后发布时间"}</th>
-                    <th>${plugin.i18n.publishCountLabel || "发布次数"}</th>
-                    <th>${plugin.i18n.actions || "操作"}</th>
+                    <th>${t("documentTitle", "文档标题")}</th>
+                    <th>${t("description", "描述")}</th>
+                    <th>${t("lastPublishedAt", "最后发布时间")}</th>
+                    <th>${t("publishCountLabel", "发布次数")}</th>
+                    <th>${t("actions", "操作")}</th>
                 </tr>
             </thead>
             <tbody id="astroStatsBody">
@@ -88,7 +90,7 @@ export function openPublishStatsDialog(plugin: PluginSample): void {
     </div>
 </div>
 <div class="b3-dialog__action">
-    <button class="b3-button b3-button--cancel">${plugin.i18n.close || "关闭"}</button>
+    <button class="b3-button b3-button--cancel">${t("close", "关闭")}</button>
 </div>`,
         width: plugin.isMobile ? "96vw" : "820px",
         height: plugin.isMobile ? "82vh" : "560px"
@@ -105,7 +107,7 @@ export function openPublishStatsDialog(plugin: PluginSample): void {
 
     const updateSummary = (visible: number) => {
         const total = Object.keys(plugin.publishStats).length;
-        const summaryTpl = plugin.i18n.statsSummary || "共 ${total} 篇文章，显示 ${visible} 篇";
+        const summaryTpl = t("statsSummary", "共 ${total} 篇文章，显示 ${visible} 篇");
         summaryElement.textContent = summaryTpl
             .replace("${total}", total.toString())
             .replace("${visible}", visible.toString());
@@ -164,9 +166,9 @@ export function openPublishStatsDialog(plugin: PluginSample): void {
             } else if (action === "copy") {
                 const title = target.dataset.title || stat.title;
                 navigator.clipboard?.writeText(title).then(() => {
-                    showMessage(plugin.i18n.titleCopied || "标题已复制");
+                    showMessage(t("titleCopied", "标题已复制"));
                 }).catch(() => {
-                    showMessage(plugin.i18n.copyFailed || "复制失败", 3000, "error");
+                    showMessage(t("copyFailed", "复制失败"), 3000, "error");
                 });
             } else if (action === "remove") {
                 const filePath = target.dataset.filePath || stat.filePath;

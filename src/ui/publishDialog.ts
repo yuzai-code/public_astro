@@ -5,14 +5,16 @@ import { extractTagsFromContent } from "../utils/tags";
 import type PluginSample from "../index";
 
 export async function openPublishDialog(plugin: PluginSample): Promise<void> {
+    const t = (key: string, fallback: string) => plugin.translate(key, fallback);
+
     const editor = plugin.getEditor();
     if (!editor) {
-        showMessage(plugin.i18n.selectDocument);
+        showMessage(t("selectDocument", "请先打开一个文档"));
         return;
     }
 
     if (!plugin.isConfigValid()) {
-        showMessage(plugin.i18n.configRequired);
+        showMessage(t("configRequired", "请先在设置中配置 GitHub 信息"));
         return;
     }
 
@@ -27,59 +29,59 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
     }
 
     const dialog = new Dialog({
-        title: plugin.i18n.publishToAstro,
+        title: t("publishToAstro", "发布到 Astro"),
         content: `<div class="b3-dialog__content astro-publisher__publish-dialog">
     <div class="fn__flex">
         <div class="fn__flex-1">
             <label class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size200">${plugin.i18n.documentTitle}</div>
+                <div class="fn__flex-center fn__size200">${t("documentTitle", "文档标题")}</div>
                 <div class="fn__flex-1">
                     <input class="b3-text-field fn__flex-1" id="title" value="${plugin.getDocumentTitle(editor)}" />
                 </div>
             </label>
             <div class="fn__hr"></div>
             <label class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size200">${plugin.i18n.description}</div>
+                <div class="fn__flex-center fn__size200">${t("description", "描述")}</div>
                 <div class="fn__flex-1">
                     <textarea class="b3-text-field fn__flex-1" id="description" placeholder="文章描述"></textarea>
                 </div>
             </label>
             <div class="fn__hr"></div>
             <label class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size200">${plugin.i18n.tags}</div>
+                <div class="fn__flex-center fn__size200">${t("tags", "标签")}</div>
                 <div class="fn__flex-1">
                     <input class="b3-text-field fn__flex-1" id="tags" placeholder="tag1, tag2, tag3" />
                 </div>
             </label>
             <div class="fn__hr"></div>
             <label class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size200">${plugin.i18n.category} <span style="color: var(--b3-theme-error);">*</span></div>
+                <div class="fn__flex-center fn__size200">${t("category", "分类")} <span style="color: var(--b3-theme-error);">*</span></div>
                 <div class="fn__flex-1">
                     <select class="b3-select fn__flex-1" id="category">
-                        <option value="">${plugin.i18n.selectCategory}</option>
+                        <option value="">${t("selectCategory", "选择分类")}</option>
                     </select>
                 </div>
             </label>
             <div class="fn__hr"></div>
             <label class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size200">${plugin.i18n.draft}</div>
+                <div class="fn__flex-center fn__size200">${t("draft", "草稿")}</div>
                 <div class="fn__flex-1">
                     <input type="checkbox" id="draft" class="b3-switch fn__flex-center">
                 </div>
             </label>
             <div class="fn__hr"></div>
             <div class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size200">${plugin.i18n.customFields}</div>
+                <div class="fn__flex-center fn__size200">${t("customFields", "自定义字段")}</div>
                 <div class="fn__flex-1">
                     <div id="customFieldsContainer" class="fn__flex-column"></div>
                     <button type="button" class="b3-button b3-button--outline fn__size200" id="addCustomField" style="margin-top: 8px;">
-                        ${plugin.i18n.addCustomField}
+                        ${t("addCustomField", "添加自定义字段")}
                     </button>
                 </div>
             </div>
             <div class="fn__hr"></div>
             <div class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size200">${plugin.i18n.yamlPreview}</div>
+                <div class="fn__flex-center fn__size200">${t("yamlPreview", "YAML 预览")}</div>
                 <div class="fn__flex-1">
                     <textarea class="b3-text-field fn__flex-1" id="yamlPreview" readonly style="height: 150px; font-family: monospace; background-color: var(--b3-theme-surface-lighter);"></textarea>
                 </div>
@@ -88,9 +90,9 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
     </div>
 </div>
 <div class="b3-dialog__action">
-    <button class="b3-button b3-button--cancel">${plugin.i18n.cancel}</button><div class="fn__space"></div>
-    <button class="b3-button b3-button--outline" id="testBtn">${plugin.i18n.testConnection}</button><div class="fn__space"></div>
-    <button class="b3-button b3-button--text" id="publishBtn">${plugin.i18n.publishToAstro}</button>
+    <button class="b3-button b3-button--cancel">${t("cancel", "取消")}</button><div class="fn__space"></div>
+    <button class="b3-button b3-button--outline" id="testBtn">${t("testConnection", "测试连接")}</button><div class="fn__space"></div>
+    <button class="b3-button b3-button--text" id="publishBtn">${t("publishToAstro", "发布到 Astro")}</button>
 </div>`,
         width: plugin.isMobile ? "92vw" : "520px"
     });
@@ -264,7 +266,7 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
 
         const labelRow = document.createElement("div");
         labelRow.className = "astro-custom-field__label";
-        labelRow.textContent = options.label || options.name || plugin.i18n.fieldName;
+        labelRow.textContent = options.label || options.name || t("fieldName", "字段名");
         if (options.required) {
             labelRow.textContent += " *";
         }
@@ -275,19 +277,19 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
 
         const nameInput = document.createElement("input");
         nameInput.className = "b3-text-field";
-        nameInput.placeholder = plugin.i18n.fieldName;
+        nameInput.placeholder = t("fieldName", "字段名");
         nameInput.style.width = "140px";
         nameInput.value = options.name || "";
         nameInput.dataset.oldName = options.name || "";
         if (options.locked) {
             nameInput.readOnly = true;
             nameInput.classList.add("is-readonly");
-            nameInput.title = plugin.i18n.lockedFieldHint || "Field name is locked";
+            nameInput.title = t("lockedFieldHint", "字段名已锁定");
         }
 
         const valueInput = document.createElement("input");
         valueInput.className = "b3-text-field fn__flex-1";
-        valueInput.placeholder = options.placeholder || plugin.i18n.fieldValue;
+        valueInput.placeholder = options.placeholder || t("fieldValue", "字段值");
 
         const typeSelect = document.createElement("select");
         typeSelect.className = "b3-select";
@@ -468,7 +470,7 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
     });
 
     publishBtn.addEventListener("click", async () => {
-        publishBtn.textContent = plugin.i18n.publishing;
+        publishBtn.textContent = t("publishing", "发布中...");
         publishBtn.disabled = true;
 
         try {
@@ -507,12 +509,12 @@ export async function openPublishDialog(plugin: PluginSample): Promise<void> {
             const normalized = normalizeMetadata(metadata);
             const filePath = await plugin.publishToGitHub(editor.protyle.block.rootID, normalized);
             plugin.recordPublishStats(editor, normalized, filePath);
-            showMessage(plugin.i18n.publishSuccess);
+            showMessage(t("publishSuccess", "发布成功"));
             dialog.destroy();
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            showMessage(plugin.i18n.publishFailed.replace("${error}", message));
-            publishBtn.textContent = plugin.i18n.publishToAstro;
+            showMessage(t("publishFailed", "发布失败：${error}").replace("${error}", message));
+            publishBtn.textContent = t("publishToAstro", "发布到 Astro");
             publishBtn.disabled = false;
         }
     });

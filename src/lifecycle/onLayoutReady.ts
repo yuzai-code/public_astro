@@ -4,6 +4,8 @@ import { createDefaultAstroConfig } from "../utils/metadata";
 import type PluginSample from "../index";
 
 export function handleLayoutReady(plugin: PluginSample): void {
+    const t = (key: string, fallback: string) => plugin.translate(key, fallback);
+
     const topBarElement = plugin.addTopBar({
         icon: "iconFace",
         title: plugin.translate("addTopBarIcon", "发布"),
@@ -31,10 +33,10 @@ export function handleLayoutReady(plugin: PluginSample): void {
     </svg>
 </div>`;
     statusIconTemp.content.firstElementChild.addEventListener("click", () => {
-        confirm("⚠️", plugin.i18n.confirmRemove.replace("${name}", plugin.name), () => {
+        confirm("⚠️", t("confirmRemove", "确认删除 ${name} 中的数据？").replace("${name}", plugin.name), () => {
             plugin.removeData(STORAGE_NAME).then(() => {
                 plugin.data[STORAGE_NAME] = {readonlyText: "Readonly"};
-                showMessage(`[${plugin.name}]: ${plugin.i18n.removedData}`);
+                showMessage(`[${plugin.name}]: ${t("removedData", "数据已删除")}`);
             });
         });
     });

@@ -65,7 +65,8 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
     const dialog = new Dialog({
         title: dialogTitle,
         content: `<div class="b3-dialog__content astro-publisher__publish-dialog">
-    <div class="fn__flex-column" style="gap: 12px;">
+    <div class="astro-publisher__dialog-body">
+        <div class="fn__flex-column" style="gap: 12px;">
         <label class="fn__flex b3-label">
             <div class="fn__flex-center fn__size200">${slugLabel}</div>
             <div class="fn__flex-1 fn__flex" style="gap: 6px;">
@@ -132,6 +133,7 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
             </div>
         </label>
     </div>
+</div>
 </div>
 <div class="b3-dialog__action">
     <button class="b3-button b3-button--cancel">${cancelLabel}</button><div class="fn__space"></div>

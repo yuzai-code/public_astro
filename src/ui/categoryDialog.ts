@@ -3,14 +3,16 @@ import type { Category } from "../types";
 import type PluginSample from "../index";
 
 export function openCategoryDialog(plugin: PluginSample, category?: Category, onSuccess?: () => void): void {
+    const t = (key: string, fallback: string) => plugin.translate(key, fallback);
+
     const isEdit = !!category;
     const dialog = new Dialog({
-        title: `${isEdit ? "✏️ " + plugin.i18n.editCategory : "➕ " + plugin.i18n.addCategory}`,
+        title: `${isEdit ? "✏️ " + t("editCategory", "编辑分类") : "➕ " + t("addCategory", "添加分类")}`,
         content: `<div class="b3-dialog__content">
     <div class="fn__flex-column" style="gap: 16px;">
         <div class="fn__flex-column">
             <label class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size120" style="font-weight: 500;">${plugin.i18n.categoryName}</div>
+                <div class="fn__flex-center fn__size120" style="font-weight: 500;">${t("categoryName", "分类名称")}</div>
                 <div class="fn__flex-1">
                     <input class="b3-text-field fn__flex-1" id="categoryName" 
                            placeholder="astro" 
@@ -22,7 +24,7 @@ export function openCategoryDialog(plugin: PluginSample, category?: Category, on
         
         <div class="fn__flex-column">
             <label class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size120" style="font-weight: 500;">${plugin.i18n.categoryTitle}</div>
+                <div class="fn__flex-center fn__size120" style="font-weight: 500;">${t("categoryTitle", "分类标题")}</div>
                 <div class="fn__flex-1">
                     <input class="b3-text-field fn__flex-1" id="categoryTitle" placeholder="Astro Framework 🚀" />
                 </div>
@@ -32,7 +34,7 @@ export function openCategoryDialog(plugin: PluginSample, category?: Category, on
         
         <div class="fn__flex-column">
             <label class="fn__flex b3-label">
-                <div class="fn__flex-center fn__size120" style="font-weight: 500; align-self: flex-start; margin-top: 8px;">${plugin.i18n.categoryDescription}</div>
+                <div class="fn__flex-center fn__size120" style="font-weight: 500; align-self: flex-start; margin-top: 8px;">${t("categoryDescription", "分类描述")}</div>
                 <div class="fn__flex-1">
                     <textarea class="b3-text-field fn__flex-1" id="categoryDescription" 
                               placeholder="The web framework for content-driven websites"
@@ -45,8 +47,8 @@ export function openCategoryDialog(plugin: PluginSample, category?: Category, on
     </div>
 </div>
 <div class="b3-dialog__action">
-    <button class="b3-button b3-button--cancel">${plugin.i18n.cancel}</button><div class="fn__space"></div>
-    <button class="b3-button b3-button--text" id="saveBtn">${plugin.i18n.save}</button>
+    <button class="b3-button b3-button--cancel">${t("cancel", "取消")}</button><div class="fn__space"></div>
+    <button class="b3-button b3-button--text" id="saveBtn">${t("save", "保存")}</button>
 </div>`,
         width: plugin.isMobile ? "92vw" : "480px"
     });
@@ -78,7 +80,7 @@ export function openCategoryDialog(plugin: PluginSample, category?: Category, on
         }
 
         if (!isEdit && plugin.categories.some(cat => cat.name === name)) {
-            showMessage(plugin.i18n.categoryExists);
+            showMessage(t("categoryExists", "分类已存在"));
             return;
         }
 
@@ -88,7 +90,7 @@ export function openCategoryDialog(plugin: PluginSample, category?: Category, on
 
             await plugin.saveCategory({ name, title, description });
 
-            showMessage(isEdit ? plugin.i18n.categoryUpdated : plugin.i18n.categoryCreated);
+            showMessage(isEdit ? t("categoryUpdated", "分类已更新") : t("categoryCreated", "分类已创建"));
             dialog.destroy();
 
             await plugin.loadCategories();
@@ -98,9 +100,9 @@ export function openCategoryDialog(plugin: PluginSample, category?: Category, on
             }
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error);
-            showMessage(plugin.i18n.categoryOperationFailed.replace("${error}", message));
+            showMessage(t("categoryOperationFailed", "分类操作失败：${error}").replace("${error}", message));
             saveBtn.disabled = false;
-            saveBtn.textContent = plugin.i18n.save;
+            saveBtn.textContent = t("save", "保存");
         }
     });
 }

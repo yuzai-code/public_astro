@@ -4,7 +4,7 @@ import { STORAGE_NAME, TAB_TYPE } from "../constants";
 
 export function openPluginMenu(plugin: PluginSample, rect?: DOMRect): void {
     const menu = new Menu("topBarSample", () => {
-        console.log(plugin.i18n.byeMenu);
+        console.log(plugin.translate("byeMenu", "再见，菜单！"));
     });
     const publishLabel = plugin.translate("publishToAstro", "发布到 Astro");
     const momentLabel = plugin.translate("publishMoment", "发布到 Moments");
