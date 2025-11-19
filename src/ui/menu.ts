@@ -6,9 +6,12 @@ export function openPluginMenu(plugin: PluginSample, rect?: DOMRect): void {
     const menu = new Menu("topBarSample", () => {
         console.log(plugin.i18n.byeMenu);
     });
+    const publishLabel = plugin.translate("publishToAstro", "发布到 Astro");
+    const momentLabel = plugin.translate("publishMoment", "发布到 Moments");
+    const statsLabel = plugin.translate("publishStats", "发布统计");
     menu.addItem({
         icon: "iconAstro",
-        label: plugin.i18n.publishToAstro,
+        label: publishLabel,
         accelerator: "⇧⌘P",
         click: () => {
             setTimeout(() => {
@@ -17,8 +20,17 @@ export function openPluginMenu(plugin: PluginSample, rect?: DOMRect): void {
         }
     });
     menu.addItem({
+        icon: "iconFace",
+        label: momentLabel,
+        click: () => {
+            setTimeout(() => {
+                plugin.showMomentDialog();
+            }, 50);
+        }
+    });
+    menu.addItem({
         icon: "iconSparkles",
-        label: plugin.i18n.publishStats,
+        label: statsLabel,
         click: () => {
             plugin.showPublishStats();
         }

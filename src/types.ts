@@ -4,6 +4,7 @@ export interface AstroConfig {
     githubRepo: string;
     astroContentPath: string;
     categoriesPath: string;
+    momentsPath: string;
     yamlTemplate: string;
     customFields: CustomField[];
 }
@@ -45,4 +46,16 @@ export interface PublishStat {
     lastPublishedAt: string;
     publishCount: number;
     lastMetadata: PublishMetadata | null;
+}
+
+export interface MomentMetadata {
+    slug: string;
+    content: string;
+    createdAt: string;
+    images: string[];
+    location?: string;
+    weather?: string;
+    link?: string;
+    mood?: string;
+    tags: string[];
 }
