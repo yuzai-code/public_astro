@@ -86,6 +86,14 @@ export function initializePlugin(plugin: PluginSample): void {
     const categoriesPathElement = document.createElement("input");
     const momentsPathElement = document.createElement("input");
     const yamlTemplateElement = document.createElement("textarea");
+    const s3EnabledElement = document.createElement("input");
+    const s3AccessKeyElement = document.createElement("input");
+    const s3SecretKeyElement = document.createElement("input");
+    const s3BucketElement = document.createElement("input");
+    const s3RegionElement = document.createElement("input");
+    const s3EndpointElement = document.createElement("input");
+    const s3PublicBaseElement = document.createElement("input");
+    const s3RootPathElement = document.createElement("input");
 
     plugin.setting = new Setting({
         confirmCallback: () => {
@@ -98,7 +106,15 @@ export function initializePlugin(plugin: PluginSample): void {
                 categoriesPath: categoriesPathElement.value,
                 momentsPath: momentsPathElement.value,
                 yamlTemplate: yamlTemplateElement.value,
-                customFields: plugin.astroConfig.customFields || []
+                customFields: plugin.astroConfig.customFields || [],
+                s3Enabled: s3EnabledElement.checked,
+                s3AccessKeyId: s3AccessKeyElement.value,
+                s3SecretAccessKey: s3SecretKeyElement.value,
+                s3Region: s3RegionElement.value,
+                s3Bucket: s3BucketElement.value,
+                s3Endpoint: s3EndpointElement.value,
+                s3PublicBaseUrl: s3PublicBaseElement.value,
+                s3RootPath: s3RootPathElement.value
             };
             plugin.saveData(ASTRO_CONFIG_NAME, plugin.astroConfig);
         }
@@ -168,6 +184,70 @@ export function initializePlugin(plugin: PluginSample): void {
             momentsPathElement.placeholder = "src/content/moments";
             momentsPathElement.value = plugin.astroConfig.momentsPath;
             return momentsPathElement;
+        }
+    });
+
+    plugin.setting.addItem({
+        title: plugin.i18n.s3UploadTitle,
+        description: plugin.i18n.s3UploadDesc,
+        createActionElement: () => {
+            const container = document.createElement("div");
+            container.className = "fn__flex-column";
+            container.style.gap = "8px";
+
+            const toggleRow = document.createElement("label");
+            toggleRow.className = "fn__flex fn__flex-center";
+            toggleRow.style.gap = "6px";
+            s3EnabledElement.type = "checkbox";
+            s3EnabledElement.checked = Boolean(plugin.astroConfig.s3Enabled);
+            const toggleText = document.createElement("span");
+            toggleText.textContent = plugin.i18n.s3EnableUploads;
+            toggleRow.appendChild(s3EnabledElement);
+            toggleRow.appendChild(toggleText);
+            container.appendChild(toggleRow);
+
+            const buildInputRow = (label: string, element: HTMLInputElement, placeholder: string, type: string = "text", desc?: string) => {
+                element.className = "b3-text-field fn__block";
+                element.placeholder = placeholder;
+                element.type = type;
+                const wrapper = document.createElement("label");
+                wrapper.className = "b3-label fn__flex-column";
+                const title = document.createElement("div");
+                title.textContent = label;
+                title.style.fontWeight = "500";
+                wrapper.appendChild(title);
+                wrapper.appendChild(element);
+                if (desc) {
+                    const hint = document.createElement("small");
+                    hint.textContent = desc;
+                    hint.style.opacity = "0.7";
+                    wrapper.appendChild(hint);
+                }
+                container.appendChild(wrapper);
+            };
+
+            s3AccessKeyElement.value = plugin.astroConfig.s3AccessKeyId || "";
+            buildInputRow(plugin.i18n.s3AccessKeyId, s3AccessKeyElement, "AKIDxxxxxxxx", "text");
+
+            s3SecretKeyElement.value = plugin.astroConfig.s3SecretAccessKey || "";
+            buildInputRow(plugin.i18n.s3SecretAccessKey, s3SecretKeyElement, "xxxxxxxxxxxx", "password");
+
+            s3BucketElement.value = plugin.astroConfig.s3Bucket || "";
+            buildInputRow(plugin.i18n.s3Bucket, s3BucketElement, "example-1250000000");
+
+            s3RegionElement.value = plugin.astroConfig.s3Region || "";
+            buildInputRow(plugin.i18n.s3Region, s3RegionElement, "ap-shanghai");
+
+            s3EndpointElement.value = plugin.astroConfig.s3Endpoint || "";
+            buildInputRow(plugin.i18n.s3Endpoint, s3EndpointElement, "https://cos.ap-shanghai.myqcloud.com", "text", plugin.i18n.s3EndpointDesc);
+
+            s3PublicBaseElement.value = plugin.astroConfig.s3PublicBaseUrl || "";
+            buildInputRow(plugin.i18n.s3PublicBaseUrl, s3PublicBaseElement, "https://cdn.example.com", "text", plugin.i18n.s3PublicBaseUrlDesc);
+
+            s3RootPathElement.value = plugin.astroConfig.s3RootPath || "";
+            buildInputRow(plugin.i18n.s3RootPath, s3RootPathElement, "uploads/moments", "text", plugin.i18n.s3RootPathDesc);
+
+            return container;
         }
     });
 

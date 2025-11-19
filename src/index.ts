@@ -40,6 +40,7 @@ import {
     uploadToGitHub
 } from "./services/githubService";
 import { buildMomentPayload, ensureIsoString, slugifyMoment } from "./utils/moments";
+import { uploadFileToS3 } from "./services/s3Service";
 
 export default class PluginSample extends Plugin {
 
@@ -205,6 +206,32 @@ export default class PluginSample extends Plugin {
             this.astroConfig?.githubRepo &&
             this.astroConfig?.momentsPath
         );
+    }
+
+    isS3UploadEnabled(): boolean {
+        const config = this.astroConfig;
+        if (!config) {
+            return false;
+        }
+        return Boolean(
+            config.s3Enabled &&
+            config.s3AccessKeyId &&
+            config.s3SecretAccessKey &&
+            config.s3Bucket &&
+            config.s3Region
+        );
+    }
+
+    async uploadMomentImages(files: File[]): Promise<string[]> {
+        if (!this.isS3UploadEnabled()) {
+            throw new Error(this.translate("s3ConfigRequired", "请先配置对象存储"));
+        }
+        const uploads: string[] = [];
+        for (const file of files) {
+            const result = await uploadFileToS3(this.astroConfig, file);
+            uploads.push(result.url);
+        }
+        return uploads;
     }
 
     async getDocumentContent(blockId: string): Promise<string> {

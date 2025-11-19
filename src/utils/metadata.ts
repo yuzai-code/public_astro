@@ -50,7 +50,15 @@ tags: {tags}
 category: "{category}"
 draft: {draft}
 ---`,
-        customFields: []
+        customFields: [],
+        s3Enabled: false,
+        s3AccessKeyId: "",
+        s3SecretAccessKey: "",
+        s3Region: "",
+        s3Bucket: "",
+        s3Endpoint: "",
+        s3PublicBaseUrl: "",
+        s3RootPath: ""
     };
 }
 

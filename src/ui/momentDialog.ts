@@ -48,6 +48,10 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
     const contentPlaceholder = t("momentContentPlaceholder", "记录一下此刻的心情...");
     const imagesLabel = t("momentImages", "图片");
     const imagesPlaceholder = t("momentImagesDesc", "支持换行或逗号分隔多个链接");
+    const uploadLabel = t("momentUploadFiles", "上传本地图片");
+    const uploadButtonLabel = t("momentUploadBtn", "上传到对象存储");
+    const uploadHint = plugin.isS3UploadEnabled() ? t("momentUploadHint", "选择本地图片后上传，成功会自动填入链接") : t("momentUploadDisabled", "可直接粘贴图片链接，或在设置中配置对象存储以启用上传");
+    const uploadDisabled = plugin.isS3UploadEnabled() ? "" : "disabled";
     const locationLabel = t("momentLocation", "位置");
     const weatherLabel = t("momentWeather", "天气");
     const moodLabel = t("momentMood", "心情");
@@ -85,6 +89,16 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
             <div class="fn__flex-center fn__size200">${imagesLabel}</div>
             <div class="fn__flex-1">
                 <textarea class="b3-text-field fn__flex-1" id="momentImages" rows="3" placeholder="${imagesPlaceholder}"></textarea>
+            </div>
+        </label>
+        <label class="fn__flex b3-label">
+            <div class="fn__flex-center fn__size200">${uploadLabel}</div>
+            <div class="fn__flex-1 fn__flex-column" style="gap: 6px;">
+                <input type="file" class="b3-text-field" id="momentImageFiles" accept="image/*" multiple ${uploadDisabled} />
+                <div class="fn__flex fn__flex-wrap" style="gap: 6px; align-items: center;">
+                    <button class="b3-button b3-button--outline fn__size160" id="momentUploadBtn" ${uploadDisabled}>${uploadButtonLabel}</button>
+                    <small style="opacity: 0.8;">${uploadHint}</small>
+                </div>
             </div>
         </label>
         <label class="fn__flex b3-label">
@@ -130,6 +144,8 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
     const createdAtInput = dialog.element.querySelector("#momentCreatedAt") as HTMLInputElement;
     const contentInput = dialog.element.querySelector("#momentContent") as HTMLTextAreaElement;
     const imagesInput = dialog.element.querySelector("#momentImages") as HTMLTextAreaElement;
+    const fileInput = dialog.element.querySelector("#momentImageFiles") as HTMLInputElement | null;
+    const uploadBtn = dialog.element.querySelector("#momentUploadBtn") as HTMLButtonElement | null;
     const locationInput = dialog.element.querySelector("#momentLocation") as HTMLInputElement;
     const weatherInput = dialog.element.querySelector("#momentWeather") as HTMLInputElement;
     const moodInput = dialog.element.querySelector("#momentMood") as HTMLInputElement;
@@ -172,6 +188,39 @@ export async function openMomentDialog(plugin: PluginSample): Promise<void> {
     };
 
     cancelBtn.addEventListener("click", closeDialog);
+
+    if (uploadBtn) {
+        uploadBtn.addEventListener("click", async () => {
+            if (!plugin.isS3UploadEnabled()) {
+                showMessage(t("s3ConfigRequired", "请先配置对象存储"), 4000, "error");
+                return;
+            }
+            if (!fileInput?.files || fileInput.files.length === 0) {
+                showMessage(t("momentUploadNoFiles", "请先选择要上传的图片"), 3000, "error");
+                return;
+            }
+
+            const originalText = uploadBtn.textContent || "";
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = t("momentUploadProgress", "上传中...");
+
+            try {
+                const urls = await plugin.uploadMomentImages(Array.from(fileInput.files));
+                const existing = parseListInput(imagesInput.value);
+                const merged = Array.from(new Set([...existing, ...urls]));
+                imagesInput.value = merged.join("\n");
+                showMessage(t("momentUploadSuccess", "图片上传成功"), 4000);
+                fileInput.value = "";
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                const template = t("momentUploadFailed", "上传失败：${error}");
+                showMessage(template.replace("${error}", message), 5000, "error");
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = originalText || uploadButtonLabel;
+            }
+        });
+    }
 
     const handlePublish = async () => {
         const slug = slugifyMoment(slugInput.value.replace(/\.json$/i, "").trim());

@@ -7,6 +7,14 @@ export interface AstroConfig {
     momentsPath: string;
     yamlTemplate: string;
     customFields: CustomField[];
+    s3Enabled: boolean;
+    s3AccessKeyId: string;
+    s3SecretAccessKey: string;
+    s3Region: string;
+    s3Bucket: string;
+    s3Endpoint?: string;
+    s3PublicBaseUrl?: string;
+    s3RootPath?: string;
 }
 
 export interface CustomField {
