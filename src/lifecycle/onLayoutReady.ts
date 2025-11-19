@@ -1,5 +1,6 @@
 import { confirm, showMessage, getFrontend, getBackend } from "siyuan";
 import { STORAGE_NAME, ASTRO_CONFIG_NAME, ASTRO_STATS_NAME } from "../constants";
+import { createDefaultAstroConfig } from "../utils/metadata";
 import type PluginSample from "../index";
 
 export function handleLayoutReady(plugin: PluginSample): void {
@@ -44,7 +45,11 @@ export function handleLayoutReady(plugin: PluginSample): void {
     plugin.loadData(STORAGE_NAME);
     plugin.loadData(ASTRO_CONFIG_NAME).then(config => {
         if (config) {
-            plugin.astroConfig = config;
+            plugin.astroConfig = {
+                ...createDefaultAstroConfig(),
+                ...config,
+                customFields: Array.isArray(config.customFields) ? config.customFields : []
+            };
         }
     });
     plugin.loadData(ASTRO_STATS_NAME).then(stats => {
